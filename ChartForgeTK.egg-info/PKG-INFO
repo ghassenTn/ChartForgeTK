@@ -1,0 +1,158 @@
+Metadata-Version: 2.2
+Name: ChartForgeTK
+Version: 1.0.2
+Summary: A modern, smooth, and dynamic charting library for Python using pure Tkinter
+Home-page: https://github.com/ghassenTn/ChartForgeTK
+Author: Ghassen
+Author-email: ghassen.xr@gmail.com
+Project-URL: Bug Reports, https://github.com/ghassenTn/ChartForgeTK/issues
+Project-URL: Source, https://github.com/ghassenTn/ChartForgeTK
+Project-URL: Documentation, https://github.com/ghassenTn/ChartForgeTK#readme
+Keywords: chart,graph,visualization,tkinter,gui,plot,matplotlib alternative
+Classifier: Development Status :: 5 - Production/Stable
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Topic :: Scientific/Engineering :: Visualization
+Classifier: Topic :: Software Development :: Libraries :: Python Modules
+Classifier: Framework :: Matplotlib
+Classifier: Operating System :: OS Independent
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: typing; python_version < "3.5"
+Dynamic: author
+Dynamic: author-email
+Dynamic: classifier
+Dynamic: description
+Dynamic: description-content-type
+Dynamic: home-page
+Dynamic: keywords
+Dynamic: project-url
+Dynamic: requires-dist
+Dynamic: requires-python
+Dynamic: summary
+
+# ChartForgeTK
+
+A modern, smooth, and dynamic charting library for Python using pure Tkinter. Create beautiful, interactive charts with minimal code.
+
+## Features
+
+- 🎨 Modern and clean design
+- 📊 Multiple chart types:
+  - Line Charts
+  - Bar Charts
+  - Pie Charts
+  - Column Charts
+  - Grouped Bar Charts
+  - Scatter Plots
+  - Bubble Charts
+  - Heatmaps
+  - Network Graphs
+- ✨ Interactive features:
+  - Tooltips
+  - Hover effects
+  - Click handlers
+- 🎯 Pure Tkinter - no external dependencies
+- 🌈 Customizable themes and styles
+- 📱 Responsive and resizable
+- 🚀 Easy to use API
+
+## Installation
+
+```bash
+pip install ChartForgeTK
+```
+
+## Quick Start
+
+```python
+from ChartForgeTK import LineChart
+import tkinter as tk
+
+# Create window
+root = tk.Tk()
+root.geometry("800x600")
+
+# Create and configure chart
+chart = LineChart(root)
+chart.pack(fill="both", expand=True)
+
+# Plot data
+data = [10, 45, 30, 60, 25, 85, 40]
+chart.plot(data)
+
+# Start application
+root.mainloop()
+```
+
+## Examples
+
+### Line Chart with Custom Labels
+```python
+from ChartForgeTK import LineChart
+import tkinter as tk
+
+root = tk.Tk()
+chart = LineChart(root)
+chart.pack(fill="both", expand=True)
+
+data = [10, 45, 30, 60, 25]
+labels = ["Mon", "Tue", "Wed", "Thu", "Fri"]
+chart.plot(data, labels)
+
+root.mainloop()
+```
+
+### Interactive Bubble Chart
+```python
+from ChartForgeTK import BubbleChart
+import tkinter as tk
+
+root = tk.Tk()
+chart = BubbleChart(root)
+chart.pack(fill="both", expand=True)
+
+x_data = [1, 2, 3, 4, 5]
+y_data = [2, 4, 3, 5, 4]
+sizes = [10, 30, 20, 40, 15]
+labels = ["A", "B", "C", "D", "E"]
+
+chart.plot(x_data, y_data, sizes, labels)
+root.mainloop()
+```
+
+### Network Graph
+```python
+from ChartForgeTK import NetworkGraph
+import tkinter as tk
+
+root = tk.Tk()
+chart = NetworkGraph(root)
+chart.pack(fill="both", expand=True)
+
+nodes = ["A", "B", "C", "D", "E"]
+edges = [("A", "B"), ("B", "C"), ("C", "D"), ("D", "E")]
+node_values = [1.0, 2.0, 1.5, 2.5, 1.8]
+edge_values = [0.5, 1.0, 0.8, 1.2]
+
+chart.plot(nodes, edges, node_values, edge_values)
+root.mainloop()
+```
+
+## Documentation
+
+For more examples and detailed documentation, visit our [GitHub repository](https://github.com/ghassenTn/ChartForgeTK).
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
