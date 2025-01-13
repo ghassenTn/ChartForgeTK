@@ -160,6 +160,6 @@ If you find ChartForgeTK helpful, please consider:
 
 ## 📬 Contact
 
-- Report issues on our [GitHub Issues](https://github.com/yourusername/ChartForgeTK/issues)
+- Report issues on our [GitHub Issues](https://github.com/ghassenTn/ChartForgeTK/issues)
 - Join our [Discord community](https://discord.gg/chartforgetk)
 - Follow updates on [Twitter](https://twitter.com/ChartForgeTK)
