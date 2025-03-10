@@ -61,15 +61,16 @@ Flexible Data Formatting – Adapt charts to specific needs.
 
 Install ChartForgeTK using pip:
 
+```python
 pip install ChartForgeTK
-
+```
 🚀 Quick Start
 
 Here's a simple example to get you started:
-
+```python
 import tkinter as tk
 from ChartForgeTK import BarChart
-
+```
 # Create window
 ```python
 root = tk.Tk()
