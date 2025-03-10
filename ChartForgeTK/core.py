@@ -45,7 +45,9 @@ class ChartStyle:
     def get_gradient_color(self, index, total):
         colors = ["#32aecb", "#cb32ae", "#aecb32", "#cb3232"]
         return colors[index % len(colors)]
-
+    def get_histogram_color(self, index, total):
+        colors = ["#32aecb"]
+        return colors[index % len(colors)]
     def create_shadow(self, color):
         return self.adjust_brightness(color, 0.7)
 

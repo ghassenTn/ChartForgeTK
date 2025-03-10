@@ -33,8 +33,8 @@ class ChartApp(tk.Tk):
         bar_chart = BarChart(bar_frame, width=780, height=520)
         bar_chart.pack(fill='both', expand=True)
         self.bar_chart = bar_chart
-        bar_data = [10, 20, 15, 25]
-        bar_labels = ["Q1", "Q2", "Q3", "Q4"]
+        bar_data = [10, 20, 15, 25,30]
+        bar_labels = ["Q1", "Q2", "Q3", "Q4","Q5"]
         bar_chart.plot(bar_data, bar_labels)
         ttk.Button(bar_frame, text="Refresh Data", command=self.refresh_bar_data).pack(pady=5)
         
@@ -115,9 +115,8 @@ class ChartApp(tk.Tk):
             ("Task 2", 2, 4),
             ("Task 3", 5, 3),
             ("Task 4", 7, 6),
-            
         ]
-        gantt_chart.plot(tasks)
+        gantt_chart.plot(gantt_data)
         # Candlestick Chart Tab (existing)
         candle_frame = ttk.Frame(notebook)
         notebook.add(candle_frame, text="Candlestick Chart")
