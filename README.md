@@ -143,11 +143,3 @@ For support or inquiries:
 
     Submit issues on GitHub
     Contact the maintainers through the repository
-
-This README has been updated to:
-
-    Reflect the actual chart types shown in the example
-    Match the functionality demonstrated in the code
-    Provide accurate installation and usage instructions
-    Remove features not present in the example (like animations, tooltips)
-    Maintain a professional and clear format
