@@ -2,11 +2,11 @@ from setuptools import setup, find_packages
 
 setup(
     name="ChartForgeTK",
-    version="1.0.2",
-    packages=["ChartForgeTK"],  # Updated package name
-    package_dir={"ChartForgeTK": "ChartForgeTK"},  # Updated directory mapping
+    version="1.1.0",
+    packages=["ChartForgeTK"],  
+    package_dir={"ChartForgeTK": "ChartForgeTK"}, 
     install_requires=[
-        "typing; python_version<'3.5'",  # For older Python versions
+        "typing; python_version<'3.5'", 
     ],
     author="Ghassen",
     author_email="ghassen.xr@gmail.com",
