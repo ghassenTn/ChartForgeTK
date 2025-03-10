@@ -88,7 +88,7 @@ root.mainloop()
 🎯 Complete Dashboard Example
 
 Here’s an advanced example demonstrating a multi-tab dashboard with various chart types:
-
+```python
 import tkinter as tk
 from tkinter import ttk
 from ChartForgeTK import (
@@ -127,7 +127,7 @@ class ChartApp(tk.Tk):
 if __name__ == "__main__":
     app = ChartApp()
     app.mainloop()
-
+```
 📋 Requirements
 
 Python 3.6+
