@@ -1,6 +1,6 @@
 Metadata-Version: 2.2
 Name: ChartForgeTK
-Version: 1.0.2
+Version: 1.1.0
 Summary: A modern, smooth, and dynamic charting library for Python using pure Tkinter
 Home-page: https://github.com/ghassenTn/ChartForgeTK
 Author: Ghassen
@@ -37,122 +37,177 @@ Dynamic: requires-dist
 Dynamic: requires-python
 Dynamic: summary
 
-# ChartForgeTK
+ChartForgeTK
 
-A modern, smooth, and dynamic charting library for Python using pure Tkinter. Create beautiful, interactive charts with minimal code.
+ChartForgeTK is a powerful and intuitive Python charting library built purely on Tkinter. It brings modern, interactive data visualization to desktop applications with zero external dependencies. Designed for data scientists, developers, and enthusiasts, ChartForgeTK makes creating beautiful charts in Tkinter applications effortless.
 
-## Features
+🚀 Why Choose ChartForgeTK?
 
-- 🎨 Modern and clean design
-- 📊 Multiple chart types:
-  - Line Charts
-  - Bar Charts
-  - Pie Charts
-  - Column Charts
-  - Grouped Bar Charts
-  - Scatter Plots
-  - Bubble Charts
-  - Heatmaps
-  - Network Graphs
-- ✨ Interactive features:
-  - Tooltips
-  - Hover effects
-  - Click handlers
-- 🎯 Pure Tkinter - no external dependencies
-- 🌈 Customizable themes and styles
-- 📱 Responsive and resizable
-- 🚀 Easy to use API
+✅ Completely Standalone – No external dependencies, just pure Tkinter.
+✅ Rich Charting Capabilities – Supports a wide variety of charts.
+✅ Highly Customizable – Theming, flexible sizing, and adaptable layouts.
+✅ Interactive & Dynamic – Easily refresh and update data.
+✅ Lightweight & Fast – Ideal for small and large-scale Tkinter applications.
 
-## Installation
+🌟 Features
 
-```bash
+📊 Comprehensive Chart Types
+
+Bar Charts – Great for categorical comparisons.
+
+Line Charts – Ideal for trends and time-series data.
+
+Pie Charts – Perfect for proportion-based data visualization.
+
+Scatter Plots – Analyze relationships between data points.
+
+Bubble Charts – Scatter plots with size-encoded values.
+
+Box Plots – Visualize data distribution and outliers.
+
+Histograms – Display frequency distributions.
+
+Gantt Charts – Plan projects and visualize timelines.
+
+Candlestick Charts – Financial market trends at a glance.
+
+Tableau Charts – Enhanced table-based visual representation.
+
+✨ Interactive Features
+
+Refreshable Data – Update charts dynamically.
+
+Tabbed Interface – Organize multiple visualizations seamlessly.
+
+Responsive Layouts – Adaptive resizing for different screen sizes.
+
+🎯 Zero External Dependencies
+
+Built entirely with Tkinter – No need for third-party libraries.
+
+Lightweight and native Python implementation.
+
+🎨 Customization Options
+
+Theme Support – Light/Dark modes.
+
+Configurable Sizes – Adjust chart dimensions easily.
+
+Flexible Data Formatting – Adapt charts to specific needs.
+
+📦 Installation
+
+Install ChartForgeTK using pip:
+
 pip install ChartForgeTK
-```
 
-## Quick Start
+🚀 Quick Start
 
-```python
-from ChartForgeTK import LineChart
+Here's a simple example to get you started:
+
 import tkinter as tk
+from ChartForgeTK import BarChart
 
 # Create window
 root = tk.Tk()
 root.geometry("800x600")
 
 # Create and configure chart
-chart = LineChart(root)
+chart = BarChart(root, width=780, height=520)
 chart.pack(fill="both", expand=True)
 
 # Plot data
-data = [10, 45, 30, 60, 25, 85, 40]
-chart.plot(data)
+data = [10, 20, 15, 25, 30]
+labels = ["Q1", "Q2", "Q3", "Q4", "Q5"]
+chart.plot(data, labels)
 
 # Start application
 root.mainloop()
-```
 
-## Examples
+🎯 Complete Dashboard Example
 
-### Line Chart with Custom Labels
+Here’s an advanced example demonstrating a multi-tab dashboard with various chart types:
 ```python
-from ChartForgeTK import LineChart
 import tkinter as tk
+from tkinter import ttk
+from ChartForgeTK import (
+    LineChart, BarChart, PieChart, BubbleChart,
+    ScatterPlot, BoxPlot, Histogram, GanttChart,
+    CandlestickChart, TableauChart
+)
+import random
 
-root = tk.Tk()
-chart = LineChart(root)
-chart.pack(fill="both", expand=True)
+class ChartApp(tk.Tk):
+    def __init__(self):
+        super().__init__()
+        self.title("ChartForgeTK Dashboard")
+        self.geometry("800x600")
+        
+        # Create notebook for tabs
+        notebook = ttk.Notebook(self)
+        notebook.pack(fill='both', expand=True, padx=10, pady=10)
+        
+        # Bar Chart Tab
+        bar_frame = ttk.Frame(notebook)
+        notebook.add(bar_frame, text="Bar Chart")
+        self.bar_chart = BarChart(bar_frame, width=780, height=520)
+        self.bar_chart.pack(fill='both', expand=True)
+        bar_data = [10, 20, 15, 25, 30]
+        bar_labels = ["Q1", "Q2", "Q3", "Q4", "Q5"]
+        self.bar_chart.plot(bar_data, bar_labels)
+        ttk.Button(bar_frame, text="Refresh Data",
+                  command=self.refresh_bar_data).pack(pady=5)
 
-data = [10, 45, 30, 60, 25]
-labels = ["Mon", "Tue", "Wed", "Thu", "Fri"]
-chart.plot(data, labels)
+    def refresh_bar_data(self):
+        new_data = [random.randint(5, 30) for _ in range(5)]
+        new_labels = ["Q1", "Q2", "Q3", "Q4", "Q5"]
+        self.bar_chart.plot(new_data, new_labels)
 
-root.mainloop()
+if __name__ == "__main__":
+    app = ChartApp()
+    app.mainloop()
 ```
+📋 Requirements
 
-### Interactive Bubble Chart
-```python
-from ChartForgeTK import BubbleChart
-import tkinter as tk
+Python 3.6+
 
-root = tk.Tk()
-chart = BubbleChart(root)
-chart.pack(fill="both", expand=True)
+Tkinter (included with Python by default)
 
-x_data = [1, 2, 3, 4, 5]
-y_data = [2, 4, 3, 5, 4]
-sizes = [10, 30, 20, 40, 15]
-labels = ["A", "B", "C", "D", "E"]
+🎨 Customization Options
 
-chart.plot(x_data, y_data, sizes, labels)
-root.mainloop()
-```
+✅ Resizable Charts – Define custom dimensions.
+✅ Light/Dark Themes – Adapt to user preferences.
+✅ Live Data Updates – Dynamic refresh for real-time changes.
+✅ Tabbed Interface – Organize charts effectively.
+✅ Scalable for Large Datasets – Handles big data efficiently.
 
-### Network Graph
-```python
-from ChartForgeTK import NetworkGraph
-import tkinter as tk
+🔮 Roadmap
 
-root = tk.Tk()
-chart = NetworkGraph(root)
-chart.pack(fill="both", expand=True)
+🔹 More Chart Types – Heatmaps, Radar Charts, Tree Maps.
+🔹 Drag & Drop Support – Enhance interactivity.
+🔹 Export Options – Save charts as images or CSV.
+🔹 Extended Styling – More themes and customization.
 
-nodes = ["A", "B", "C", "D", "E"]
-edges = [("A", "B"), ("B", "C"), ("C", "D"), ("D", "E")]
-node_values = [1.0, 2.0, 1.5, 2.5, 1.8]
-edge_values = [0.5, 1.0, 0.8, 1.2]
+🤝 Contributing
 
-chart.plot(nodes, edges, node_values, edge_values)
-root.mainloop()
-```
+Contributions are always welcome! Here’s how you can help:
 
-## Documentation
+1️⃣ Fork the repository
+2️⃣ Create a feature branch (git checkout -b feature-newchart)
+3️⃣ Commit your changes (git commit -m "Added new chart type")
+4️⃣ Push to your branch (git push origin feature-newchart)
+5️⃣ Open a Pull Request 🚀
 
-For more examples and detailed documentation, visit our [GitHub repository](https://github.com/ghassenTn/ChartForgeTK).
+📄 License
 
-## Contributing
+ChartForgeTK is open-source and released under the MIT License.
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+📬 Contact & Support
 
-## License
+💡 Found an issue? Have a suggestion? We’d love to hear from you!
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+Submit an Issue – Report bugs and feature requests on GitHub.
+
+Reach Out to Maintainers – Connect through the repository.
+
+🔥 Bring your Tkinter apps to life with ChartForgeTK! 🚀
