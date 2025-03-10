@@ -1,5 +1,14 @@
 # ChartForgeTK
 
+ChartForgeTK is a powerful and intuitive Python charting library built on pure Tkinter. It brings modern, interactive data visualization to desktop applications without external dependencies. Perfect for data scientists, developers, and anyone needing beautiful charts in their Tkinter applications.
+
+The library combines the reliability of Tkinter with contemporary design principles to offer:
+- Smooth, animated visualizations
+- Interactive charts with tooltips and click events
+- Multiple chart types from basic to advanced
+- Zero external dependencies
+- Modern, customizable themes
+
 A modern, smooth, and dynamic charting library for Python using pure Tkinter. Create beautiful, interactive charts with minimal code.
 
 ## 🌟 Features
@@ -134,6 +143,38 @@ chart.plot(
     labels,
     animate=True,
     animation_duration=1000
+)
+
+root.mainloop()
+```
+
+### Area Chart with Multiple Series
+```python
+from ChartForgeTK import AreaChart
+import tkinter as tk
+
+root = tk.Tk()
+chart = AreaChart(root)
+chart.pack(fill="both", expand=True)
+
+# Create sample data for multiple series
+series1 = [10, 25, 15, 30, 20, 35, 25]
+series2 = [5, 15, 10, 20, 15, 25, 20]
+labels = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+series_names = ["Revenue", "Costs"]
+
+# Plot with gradient colors and hover effect
+def on_hover(series_idx, point_idx):
+    print(f"Series {series_names[series_idx]}: {labels[point_idx]}")
+
+chart.plot(
+    data=[series1, series2],
+    labels=labels,
+    series_names=series_names,
+    title="Weekly Financial Overview",
+    animate=True,
+    animation_duration=1000,
+    on_hover=on_hover
 )
 
 root.mainloop()
