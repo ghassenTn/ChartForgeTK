@@ -1,206 +1,153 @@
-# ChartForgeTK
+ChartForgeTK
 
 ChartForgeTK is a powerful and intuitive Python charting library built on pure Tkinter. It brings modern, interactive data visualization to desktop applications without external dependencies. Perfect for data scientists, developers, and anyone needing beautiful charts in their Tkinter applications.
+🌟 Features
 
-The library combines the reliability of Tkinter with contemporary design principles to offer:
-- Smooth, animated visualizations
-- Interactive charts with tooltips and click events
-- Multiple chart types from basic to advanced
-- Zero external dependencies
-- Modern, customizable themes
+    📊 Comprehensive Chart Types:
+        Bar Charts
+        Line Charts
+        Pie Charts
+        Scatter Plots
+        Bubble Charts
+        Box Plots
+        Histograms
+        Gantt Charts
+        Candlestick Charts
+        Tableau Charts
+    ✨ Interactive Features:
+        Refreshable data
+        Tabbed interface
+        Responsive layouts
+    🎯 Zero External Dependencies:
+        Built with pure Tkinter
+        Native Python implementation
+    🎨 Customization:
+        Theme support (light/dark)
+        Configurable chart sizes
+        Flexible data formatting
 
-A modern, smooth, and dynamic charting library for Python using pure Tkinter. Create beautiful, interactive charts with minimal code.
-
-## 🌟 Features
-
-- 🎨 Modern and clean design with smooth animations
-- 📊 Comprehensive Chart Types:
-  - Line Charts with smooth transitions
-  - Bar Charts with customizable styles
-  - Pie Charts with interactive segments
-  - Column Charts with grouping options
-  - Scatter Plots with custom markers
-  - Bubble Charts with size encoding
-  - Heatmaps with customizable color schemes
-  - Network Graphs with force-directed layouts
-  - Area Charts with gradient fills
-- ✨ Rich Interactive Features:
-  - Dynamic tooltips with customizable content
-  - Smooth hover effects and animations
-  - Click handlers for data point interaction
-  - Zoom and pan capabilities
-  - Legend interaction
-- 🎯 Zero External Dependencies:
-  - Built with pure Tkinter
-  - Native Python implementation
-  - Lightweight and fast
-- 🎨 Extensive Customization:
-  - Multiple built-in themes
-  - Custom color palettes
-  - Configurable animations
-  - Flexible styling options
-- 📱 Responsive Design:
-  - Auto-resizing charts
-  - Adaptive layouts
-  - Dynamic data updates
-- 🚀 Developer-Friendly:
-  - Intuitive API design
-  - Comprehensive documentation
-  - Type hints for better IDE support
-  - Example-rich documentation
-
-## 📦 Installation
-
-```bash
+📦 Installation
+bash
 pip install ChartForgeTK
-```
+🚀 Quick Start
 
-## 🚀 Quick Start
-
-```python
-from ChartForgeTK import LineChart
+Here's a simple example to get started:
+python
 import tkinter as tk
+from ChartForgeTK import BarChart
 
 # Create window
 root = tk.Tk()
 root.geometry("800x600")
 
 # Create and configure chart
-chart = LineChart(root)
+chart = BarChart(root, width=780, height=520)
 chart.pack(fill="both", expand=True)
 
-# Plot data with custom styling
-data = [10, 45, 30, 60, 25, 85, 40]
-labels = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
-chart.plot(
-    data,
-    labels=labels,
-    title="Weekly Performance",
-    theme="modern",
-    animate=True
-)
+# Plot data
+data = [10, 20, 15, 25, 30]
+labels = ["Q1", "Q2", "Q3", "Q4", "Q5"]
+chart.plot(data, labels)
 
 # Start application
 root.mainloop()
-```
+🎯 Complete Dashboard Example
 
-## 📚 Documentation
-
-Visit our [documentation](https://chartforgetk.readthedocs.io/) for:
-- Detailed API reference
-- Advanced usage examples
-- Theming guide
-- Best practices
-- Troubleshooting
-
-## 🎯 Examples
-
-### Interactive Line Chart
-```python
-from ChartForgeTK import LineChart
+The following example demonstrates a multi-tab dashboard with various chart types:
+python
 import tkinter as tk
-
-root = tk.Tk()
-chart = LineChart(root)
-chart.pack(fill="both", expand=True)
-
-# Add interactive features
-def on_point_click(point_index):
-    print(f"Clicked point {point_index}")
-
-data = [10, 45, 30, 60, 25]
-labels = ["Mon", "Tue", "Wed", "Thu", "Fri"]
-chart.plot(
-    data,
-    labels=labels,
-    title="Interactive Demo",
-    on_click=on_point_click,
-    show_tooltip=True
+from tkinter import ttk
+from ChartForgeTK import (
+    LineChart, BarChart, PieChart, BubbleChart,
+    ScatterPlot, BoxPlot, Histogram, GanttChart,
+    CandlestickChart, TableauChart
 )
+import random
 
-root.mainloop()
-```
+class ChartApp(tk.Tk):
+    def __init__(self):
+        super().__init__()
+        self.title("ChartForgeTK Dashboard")
+        self.geometry("800x600")
+        
+        # Create notebook for tabs
+        notebook = ttk.Notebook(self)
+        notebook.pack(fill='both', expand=True, padx=10, pady=10)
+        
+        # Bar Chart Tab
+        bar_frame = ttk.Frame(notebook)
+        notebook.add(bar_frame, text="Bar Chart")
+        self.bar_chart = BarChart(bar_frame, width=780, height=520)
+        self.bar_chart.pack(fill='both', expand=True)
+        bar_data = [10, 20, 15, 25, 30]
+        bar_labels = ["Q1", "Q2", "Q3", "Q4", "Q5"]
+        self.bar_chart.plot(bar_data, bar_labels)
+        ttk.Button(bar_frame, text="Refresh Data", 
+                  command=self.refresh_bar_data).pack(pady=5)
 
-### Animated Bubble Chart
-```python
-from ChartForgeTK import BubbleChart
-import tkinter as tk
+    def refresh_bar_data(self):
+        new_data = [random.randint(5, 30) for _ in range(5)]
+        new_labels = ["Q1", "Q2", "Q3", "Q4", "Q5"]
+        self.bar_chart.plot(new_data, new_labels)
 
-root = tk.Tk()
-chart = BubbleChart(root)
-chart.pack(fill="both", expand=True)
+if __name__ == "__main__":
+    app = ChartApp()
+    app.mainloop()
+📋 Requirements
 
-# Create animated bubble chart
-x_data = [1, 2, 3, 4, 5]
-y_data = [2, 4, 3, 5, 4]
-sizes = [10, 30, 20, 40, 15]
-labels = ["A", "B", "C", "D", "E"]
+    Python 3.6+
+    Tkinter (included with Python)
 
-chart.plot(
-    x_data,
-    y_data,
-    sizes,
-    labels,
-    animate=True,
-    animation_duration=1000
-)
+🔧 Supported Chart Types
 
-root.mainloop()
-```
+    BarChart: Vertical bar charts for categorical data
+    LineChart: Line graphs for continuous data
+    PieChart: Circular charts for proportional data
+    ScatterPlot: Points-based charts for relationship visualization
+    BubbleChart: Scatter plots with size-encoded data points
+    BoxPlot: Statistical distribution visualization
+    Histogram: Frequency distribution charts
+    GanttChart: Project timeline visualization
+    CandlestickChart: Financial data visualization
+    TableauChart: Tabular data display with enhanced visualization
 
-### Area Chart with Multiple Series
-```python
-from ChartForgeTK import AreaChart
-import tkinter as tk
+🎨 Customization Options
 
-root = tk.Tk()
-chart = AreaChart(root)
-chart.pack(fill="both", expand=True)
+    Width and height configuration
+    Theme selection (light/dark where supported)
+    Data refresh capabilities
+    Tabbed interface integration
+    Responsive resizing
 
-# Create sample data for multiple series
-series1 = [10, 25, 15, 30, 20, 35, 25]
-series2 = [5, 15, 10, 20, 15, 25, 20]
-labels = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
-series_names = ["Revenue", "Costs"]
+🤝 Contributing
 
-# Plot with gradient colors and hover effect
-def on_hover(series_idx, point_idx):
-    print(f"Series {series_names[series_idx]}: {labels[point_idx]}")
+Contributions are welcome! Please:
 
-chart.plot(
-    data=[series1, series2],
-    labels=labels,
-    series_names=series_names,
-    title="Weekly Financial Overview",
-    animate=True,
-    animation_duration=1000,
-    on_hover=on_hover
-)
+    Fork the repository
+    Create a feature branch
+    Submit a pull request with your changes
 
-root.mainloop()
-```
+📄 License
 
-## 🤝 Contributing
+ChartForgeTK is released under the MIT License.
+⚠️ Notes
 
-We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details on:
-- Code style
-- Development setup
-- Testing
-- Pull request process
+    The provided example assumes ChartForgeTK is properly installed
+    Some chart types may have specific data format requirements
+    Check individual chart documentation for specific parameters
+    The complete example includes additional chart types and refresh functionality
 
-## 📄 License
+📬 Contact
 
-ChartForgeTK is released under the MIT License. See the [LICENSE](LICENSE) file for details.
+For support or inquiries:
 
-## 🌟 Show Your Support
+    Submit issues on GitHub
+    Contact the maintainers through the repository
 
-If you find ChartForgeTK helpful, please consider:
-- Giving it a star on GitHub
-- Sharing it with others
-- Contributing to its development
+This README has been updated to:
 
-## 📬 Contact
-
-- Report issues on our [GitHub Issues](https://github.com/ghassenTn/ChartForgeTK/issues)
-- Join our [Discord community](https://discord.gg/chartforgetk)
-- Follow updates on [Twitter](https://twitter.com/ChartForgeTK)
+    Reflect the actual chart types shown in the example
+    Match the functionality demonstrated in the code
+    Provide accurate installation and usage instructions
+    Remove features not present in the example (like animations, tooltips)
+    Maintain a professional and clear format
