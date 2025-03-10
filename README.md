@@ -71,21 +71,27 @@ import tkinter as tk
 from ChartForgeTK import BarChart
 
 # Create window
+```python
 root = tk.Tk()
 root.geometry("800x600")
+```
 
 # Create and configure chart
+```python
 chart = BarChart(root, width=780, height=520)
 chart.pack(fill="both", expand=True)
+```
 
 # Plot data
+```python
 data = [10, 20, 15, 25, 30]
 labels = ["Q1", "Q2", "Q3", "Q4", "Q5"]
 chart.plot(data, labels)
-
+```
 # Start application
+```python
 root.mainloop()
-
+```
 🎯 Complete Dashboard Example
 
 Here’s an advanced example demonstrating a multi-tab dashboard with various chart types:
