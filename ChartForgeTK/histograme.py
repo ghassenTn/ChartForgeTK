@@ -38,10 +38,7 @@ class Histogram(Chart):
         self._draw_axes(self.x_min, self.x_max, self.y_min, self.y_max)
         self._animate_bars()
         self._add_interactive_effects()
-        # self._add_legend()
         self._add_statistics()
-        # self._add_export_button()
-        # self._add_theme_switch()
 
     def _calculate_bins(self):
         """Calculate bins and frequencies"""
@@ -73,7 +70,7 @@ class Histogram(Chart):
         def ease(t):
             return t * t * (3 - 2 * t)
         
-        bar_width = (self.width - 2 * self.padding) / self.bins  # No gaps between bars
+        bar_width = (self.width - 2 * self.padding) / self.bins 
         
         def update_animation(frame: int, total_frames: int):
             progress = ease(frame / total_frames)
@@ -92,20 +89,12 @@ class Histogram(Chart):
                 color = self.style.get_histogram_color(i, self.bins)
                 
                 if freq > 0:
-                    shadow = self.canvas.create_rectangle(
-                        x_left + 2, y_current + 2,
-                        x_right + 2, y_base + 2,
-                        fill=self.style.create_shadow(color),
-                        outline="",
-                        tags=('shadow', f'bar_{i}')
-                    )
-                    self.bars.append(shadow)
-                
+                    # Remove shadow for a cleaner look
                     bar = self.canvas.create_rectangle(
                         x_left, y_current,
                         x_right, y_base,
                         fill=color,
-                        outline=self.style.adjust_brightness(color, 0.8),
+                        outline="",  # Remove the outline to make bars contiguous
                         tags=('bar', f'bar_{i}')
                     )
                     self.bars.append(bar)
@@ -146,11 +135,9 @@ class Histogram(Chart):
         
         def on_motion(event):
             x, y = event.x, event.y
-            
             if self.padding <= x <= self.width - self.padding and self.padding <= y <= self.height - self.padding:
                 bar_width = (self.width - 2 * self.padding) / self.bins
                 bar_index = int((x - self.padding) / bar_width)
-                
                 if 0 <= bar_index < self.bins and self.frequencies[bar_index] > 0:
                     x_left = self._data_to_pixel_x(self.bin_edges[bar_index], self.x_min, self.x_max)
                     x_right = self._data_to_pixel_x(self.bin_edges[bar_index + 1], self.x_min, self.x_max)
@@ -187,16 +174,6 @@ class Histogram(Chart):
         
         self.canvas.bind('<Motion>', on_motion)
         self.canvas.bind('<Leave>', on_leave)
-
-    # def _add_legend(self):
-    #     """Add a legend to the histogram"""
-    #     legend_frame = ttk.Frame(self.canvas)
-    #     legend_frame.place(relx=0.95, rely=0.05, anchor='ne')
-        
-    #     for i in range(self.bins):
-    #         color = self.style.get_gradient_color(i, self.bins)
-    #         ttk.Label(legend_frame, text=f"Bin {i+1}", background=color).pack(anchor='w')
-
     def _add_statistics(self):
         """Display statistical information"""
         stats_frame = ttk.Frame(self.canvas)
@@ -211,28 +188,6 @@ class Histogram(Chart):
         ttk.Label(stats_frame, text=f"Median: {median:.2f}").pack(anchor='w')
         ttk.Label(stats_frame, text=f"Mode: {mode:.2f}").pack(anchor='w')
         ttk.Label(stats_frame, text=f"Std Dev: {std_dev:.2f}").pack(anchor='w')
-
-    # def _add_export_button(self):
-    #     """Add a button to export the histogram as an image"""
-    #     export_button = ttk.Button(self.canvas, text="Export", command=self._export_image)
-    #     export_button.place(relx=0.95, rely=0.95, anchor='se')
-
-    # def _export_image(self):
-    #     """Export the histogram as an image"""
-    #     file_path = filedialog.asksaveasfilename(defaultextension=".png", filetypes=[("PNG files", "*.png")])
-    #     if file_path:
-    #         self.canvas.postscript(file=file_path, colormode='color')
-
-    # def _add_theme_switch(self):
-    #     """Add a button to switch between light and dark themes"""
-    #     theme_button = ttk.Button(self.canvas, text="Switch Theme", command=self._switch_theme)
-    #     theme_button.place(relx=0.05, rely=0.95, anchor='sw')
-
-    # def _switch_theme(self):
-    #     """Switch between light and dark themes"""
-    #     self.theme = 'dark' if self.theme == 'light' else 'light'
-    #     self.style = ChartStyle(self.theme)
-    #     self.plot(self.data, self.bins)
 
     def _zoom(self, event):
         """Zoom in or out based on mouse wheel"""

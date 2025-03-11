@@ -1,0 +1,10 @@
+{
+    "configurations": [
+        {
+            "type": "python",
+            "name": "Python configuration",
+            "file": "showcase.py",
+            "arguments": []
+        }
+    ]
+}

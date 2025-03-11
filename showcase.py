@@ -14,6 +14,7 @@ from ChartForgeTK import (
     TableauChart,
     GanttChart 
 )
+import ttkbootstrap as ttkbs
 import random
 import math
 from typing import List, Tuple
@@ -23,10 +24,8 @@ class ChartApp(tk.Tk):
         super().__init__()
         self.title("ChartForgeTK Dashboard")
         self.geometry("800x600")
-        
         notebook = ttk.Notebook(self)
         notebook.pack(fill='both', expand=True, padx=10, pady=10)
-        
         # Bar Chart Tab (existing)
         bar_frame = ttk.Frame(notebook)
         notebook.add(bar_frame, text="Bar Chart")
@@ -37,7 +36,6 @@ class ChartApp(tk.Tk):
         bar_labels = ["Q1", "Q2", "Q3", "Q4","Q5"]
         bar_chart.plot(bar_data, bar_labels)
         ttk.Button(bar_frame, text="Refresh Data", command=self.refresh_bar_data).pack(pady=5)
-        
         # Line Chart Tab (existing)
         line_frame = ttk.Frame(notebook)
         notebook.add(line_frame, text="Line Chart")
@@ -47,15 +45,14 @@ class ChartApp(tk.Tk):
         line_data = [10, 15, 13, 18, 16, 20]
         line_chart.plot(line_data)
         ttk.Button(line_frame, text="Refresh Data", command=self.refresh_line_data).pack(pady=5)
-        
         # Pie Chart Tab (existing)
         pie_frame = ttk.Frame(notebook)
         notebook.add(pie_frame, text="Pie Chart")
         pie_chart = PieChart(pie_frame, width=780, height=520)
         pie_chart.pack(fill='both', expand=True)
         self.pie_chart = pie_chart
-        pie_data = [30, 20, 15, 35]
-        pie_labels = ["A", "B", "C", "D"]
+        pie_data = [30, 20, 15, 35,44,34,34]
+        pie_labels = ["A", "B", "C", "D","R","E","L"]
         pie_chart.plot(pie_data, pie_labels)
         ttk.Button(pie_frame, text="Refresh Data", command=self.refresh_pie_data).pack(pady=5)
         

@@ -9,13 +9,13 @@ class LineChart(Chart):
         self.data = []
         self.points = []
         self.line_width = 1
-        self.dot_radius = 3
+        self.dot_radius = 2
         self.animation_duration = 500
 
     def _clamp_color(self, color: str) -> str:
         """Ensure a hex color is valid by clamping RGB values between 0 and 255."""
         if not color.startswith('#') or len(color) != 7:
-            return "#000000"  # Fallback to black if invalid
+            return "#000000"  
         try:
             r = max(0, min(255, int(color[1:3], 16)))
             g = max(0, min(255, int(color[3:5], 16)))

@@ -3,33 +3,33 @@ from typing import List, Optional, Union, Tuple
 import colorsys
 import tkinter as tk
 from tkinter import ttk, font
-import ttkbootstrap as ttkbs
+# import ttkbootstrap as ttkbs
 class ChartStyle:
     def __init__(self, theme='light'):
         self.theme = theme
         if theme == 'light':
-            self.BACKGROUND = "#ffffff"
-            self.TEXT = "#333333"
-            self.TEXT_SECONDARY = "#666666"
-            self.PRIMARY = "#32aecb"  # Main color for elements
-            self.ACCENT = "#32aecb"   # Highlight color (matching PRIMARY for consistency)
-            self.AXIS_COLOR = "#666666"
-            self.GRID_COLOR = "#e0e0e0"
-            self.TICK_COLOR = "#666666"
-            self.SECONDARY = "#7FCECD"
-            self.ACCENT_HOVER = '#5091CD'
+            self.BACKGROUND = "#FFFFFF"  # Clean, crisp white
+            self.TEXT = "#1E293B"        # Deep slate gray for strong contrast
+            self.TEXT_SECONDARY = "#64748B"  # Soft gray-blue for secondary text
+            self.PRIMARY = "#2563EB"     # Bold modern blue
+            self.ACCENT = "#FACC15"      # Bright yellow-gold for highlights
+            self.AXIS_COLOR = "#94A3B8"  # Muted blue-gray for axes
+            self.GRID_COLOR = "#E2E8F0"  # Soft light gray for subtle grids
+            self.TICK_COLOR = "#64748B"  # Subtle gray-blue for ticks
+            self.SECONDARY = "#38BDF8"   # Fresh cyan-blue for contrast
+            self.ACCENT_HOVER = "#FB923C"  # Soft orange for interactive elements
             
         else:  # dark
-            self.BACKGROUND = "#1a1a1a"
-            self.TEXT = "#ffffff"
-            self.TEXT_SECONDARY = "#b3b3b3"
-            self.PRIMARY = "#32aecb"
-            self.ACCENT = "#32aecb"
-            self.AXIS_COLOR = "#b3b3b3"
-            self.GRID_COLOR = "#333333"
-            self.TICK_COLOR = "#b3b3b3"
-            self.SECONDARY = "#7FCECD"
-            self.ACCENT_HOVER = 'blue'
+            self.BACKGROUND = "#0F172A"  # Deep navy for a sleek dark theme
+            self.TEXT = "#E2E8F0"        # Light gray for text clarity
+            self.TEXT_SECONDARY = "#94A3B8"  # Muted blue-gray for balance
+            self.PRIMARY = "#3B82F6"     # Bright blue with a modern touch
+            self.ACCENT = "#EAB308"      # Neon gold for highlights
+            self.AXIS_COLOR = "#475569"  # Darker gray-blue for soft contrast
+            self.GRID_COLOR = "#334155"  # Dark gray-blue for subtle grid lines
+            self.TICK_COLOR = "#94A3B8"  # Muted blue-gray for balance
+            self.SECONDARY = "#22D3EE"   # Vibrant cyan for secondary elements
+            self.ACCENT_HOVER = "#F87171"  # Coral red for hover interactions
         
         self.PADDING = 50
         self.AXIS_WIDTH = 2
@@ -43,11 +43,21 @@ class ChartStyle:
         self.TOOLTIP_PADDING = 5
 
     def get_gradient_color(self, index, total):
-        colors = ["#32aecb", "#cb32ae", "#aecb32", "#cb3232"]
+        # Updated modern gradient with bold yet refined colors
+        colors = [
+            "#2563EB",  # Deep blue
+            "#FACC15",  # Vivid gold
+            "#F43F5E",  # Bold pinkish red
+            "#10B981",  # Bright green
+            "#8B5CF6",  # Elegant violet
+        ]
         return colors[index % len(colors)]
+
     def get_histogram_color(self, index, total):
-        colors = ["#32aecb"]
+        # Modernized, vibrant but deep blue
+        colors = ["#2563EB"]  
         return colors[index % len(colors)]
+
     def create_shadow(self, color):
         return self.adjust_brightness(color, 0.7)
 
@@ -56,6 +66,7 @@ class ChartStyle:
         g = max(0, min(255, int(int(color[3:5], 16) * factor)))
         b = max(0, min(255, int(int(color[5:7], 16) * factor)))
         return f"#{r:02x}{g:02x}{b:02x}"
+
 
 class Chart(tk.Frame):
     def __init__(self, parent=None, width: int = 400, height: int = 400, display_mode='frame', theme='light'):
@@ -188,30 +199,6 @@ class Chart(tk.Frame):
         """Get the hovered chart element (e.g., bar, point)."""
         return None  # Child classes override this
 
-    def _show_tooltip(self, x: int, y: int, tag: str):
-        """Show a modern tooltip for the hovered element."""
-        if not self._tooltip:
-            self._tooltip, self._tooltip_label = self._create_tooltip()
-        self._tooltip_label.config(text=f"Value: {tag}")
-        self._tooltip.wm_geometry(f"+{x + 10}+{y + 10}")
-        self._tooltip.deiconify()
-
-    def _create_tooltip(self) -> Tuple[tk.Toplevel, ttk.Label]:
-        """Create a modern tooltip."""
-        tooltip = tk.Toplevel(self.canvas)
-        tooltip.wm_overrideredirect(True)
-        frame = ttk.Frame(tooltip, style='Tooltip.TFrame')
-        frame.pack(fill='both', expand=True)
-
-        style = ttk.Style()
-        style.configure('Tooltip.TFrame', background=self.style.TEXT, relief='solid', borderwidth=0)
-
-        label = ttk.Label(frame, font=self.style.TOOLTIP_FONT, foreground=self.style.BACKGROUND,
-                         background=self.style.TEXT, padding=self.style.TOOLTIP_PADDING)
-        label.pack()
-
-        tooltip.withdraw()
-        return tooltip, label
 
     def redraw(self):
         """Redraw the chart with current data."""
@@ -270,7 +257,6 @@ class Chart(tk.Frame):
 
     def _draw_axes(self, x_min: float, x_max: float, y_min: float, y_max: float):
         """Draw beautiful axes with grid lines, storing ranges for interactivity."""
-        # Store ranges as instance variables
         self.x_min, self.x_max = x_min, x_max
         self.y_min, self.y_max = y_min, y_max
 
@@ -334,33 +320,40 @@ class Chart(tk.Frame):
                                    fill=self.style.GRID_COLOR, width=self.style.GRID_WIDTH, dash=(2, 4))
             y += y_interval
 
-    def _draw_ticks(self, x_min, x_max, y_min, y_max):
-        """Draw axis ticks and labels with modern styling."""
+    def _draw_ticks(self, x_min: float, x_max: float, y_min: float, y_max: float):
+        """Draw axis ticks and labels with modern styling, preventing duplicates."""
         x_interval = self._calculate_tick_interval(x_max - x_min)
         y_interval = self._calculate_tick_interval(y_max - y_min)
 
         # X-axis ticks and labels
         x = math.ceil(x_min / x_interval) * x_interval
         y_zero = 0 if y_min <= 0 <= y_max else y_min
-        while x <= x_max:
+        drawn_x_labels = set()  # Track drawn X labels to avoid duplicates
+        while x <= x_max + 1e-10:  # Add small epsilon to handle floating-point edge cases
             px = self._data_to_pixel_x(x, x_min, x_max)
             py = self._data_to_pixel_y(y_zero, y_min, y_max)
             self.canvas.create_line(px, py, px, py + self.style.TICK_LENGTH,
                                    fill=self.style.TICK_COLOR, width=self.style.AXIS_WIDTH, capstyle=tk.ROUND)
-            self.canvas.create_text(px, py + self.style.TICK_LENGTH + 5, text=f"{x:g}",
-                                   font=self.style.AXIS_FONT, fill=self.style.TEXT_SECONDARY, anchor='n')
+            label = f"{x:g}"
+            if label not in drawn_x_labels:
+                self.canvas.create_text(px, py + self.style.TICK_LENGTH + 5, text=label,
+                                       font=self.style.AXIS_FONT, fill=self.style.TEXT_SECONDARY, anchor='n')
+                drawn_x_labels.add(label)
             x += x_interval
 
         # Y-axis ticks and labels
         y = math.ceil(y_min / y_interval) * y_interval
-        while y <= y_max:
+        drawn_y_labels = set()  # Track drawn Y labels to avoid duplicates
+        while y <= y_max + 1e-10:  # Add small epsilon to handle floating-point edge cases
             px = self.padding
             py = self._data_to_pixel_y(y, y_min, y_max)
             self.canvas.create_line(px - self.style.TICK_LENGTH, py, px, py,
                                    fill=self.style.TICK_COLOR, width=self.style.AXIS_WIDTH, capstyle=tk.ROUND)
-            text = f"{y/1000:g}k" if abs(y) >= 1000 else f"{y:g}"
-            self.canvas.create_text(px - self.style.TICK_LENGTH - 5, py, text=text,
-                                   font=self.style.AXIS_FONT, fill=self.style.TEXT_SECONDARY, anchor='e')
+            label = f"{y/1000:g}k" if abs(y) >= 1000 else f"{y:g}"
+            if label not in drawn_y_labels and abs(py - self.height / 2) > 10:  # Avoid overlap near center
+                self.canvas.create_text(px - self.style.TICK_LENGTH - 5, py, text=label,
+                                       font=self.style.AXIS_FONT, fill=self.style.TEXT_SECONDARY, anchor='e')
+                drawn_y_labels.add(label)
             y += y_interval
 
     def _data_to_pixel_x(self, x: float, x_min: float, x_max: float) -> float:
@@ -376,31 +369,18 @@ class Chart(tk.Frame):
         return self.height - self.padding - (y - y_min) * (self.height - 2 * self.padding) / (y_max - y_min)
 
     def _calculate_tick_interval(self, range: float) -> float:
-        """Calculate a nice tick interval based on the range."""
+        """Calculate a nice tick interval based on the range, aiming for 5-10 ticks."""
         if range == 0:
             return 1
-        exp = math.floor(math.log10(range))
-        interval = 10 ** exp
-        if range / interval < 5:
-            interval /= 2
-        elif range / interval < 10:
-            interval /= 5
+        # Target 5-10 ticks across the range
+        magnitude = math.pow(10, math.floor(math.log10(range)))
+        normalized_range = range / magnitude
+        if normalized_range <= 2:
+            interval = magnitude / 5  # e.g., 0.2 for range 1-2
+        elif normalized_range <= 5:
+            interval = magnitude / 2  # e.g., 0.5 for range 2-5
+        else:
+            interval = magnitude      # e.g., 1 for range 5-10+
         return interval
 
-
-
-
-
-# Example usage
-if __name__ == "__main__":
-    line_chart = LineChart(width=800, height=600, display_mode='window')
-    line_chart.plot([10, 20, 30, 40, 50])
-    line_chart.show()
-
-    bar_chart = BarChart(width=800, height=600, display_mode='window')
-    bar_chart.plot([10, 20, 30, 40, 50])
-    bar_chart.show()
-
-    # pie_chart = PieChart(width=800, height=600, display_mode='window')
-    # pie_chart.plot([10, 20, 30, 40], ['A', 'B', 'C', 'D'])
-    # pie_chart.show()
+    

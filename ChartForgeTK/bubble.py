@@ -24,6 +24,7 @@ class BubbleChart(Chart):
             
         self.data = data
         
+        
         # Calculate ranges
         x_values, y_values, sizes = zip(*data)
         self.x_min, self.x_max = min(x_values), max(x_values)
