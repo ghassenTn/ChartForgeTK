@@ -1,6 +1,6 @@
 Metadata-Version: 2.2
 Name: ChartForgeTK
-Version: 1.1.0
+Version: 1.2.0
 Summary: A modern, smooth, and dynamic charting library for Python using pure Tkinter
 Home-page: https://github.com/ghassenTn/ChartForgeTK
 Author: Ghassen
@@ -40,6 +40,7 @@ Dynamic: summary
 ChartForgeTK
 
 ChartForgeTK is a powerful and intuitive Python charting library built purely on Tkinter. It brings modern, interactive data visualization to desktop applications with zero external dependencies. Designed for data scientists, developers, and enthusiasts, ChartForgeTK makes creating beautiful charts in Tkinter applications effortless.
+![Screenshot From 2025-03-10 09-59-06](https://github.com/user-attachments/assets/f63687dc-d73a-49e6-920b-b1c293756c05)
 
 🚀 Why Choose ChartForgeTK?
 
@@ -99,31 +100,38 @@ Flexible Data Formatting – Adapt charts to specific needs.
 
 Install ChartForgeTK using pip:
 
+```python
 pip install ChartForgeTK
-
+```
 🚀 Quick Start
 
 Here's a simple example to get you started:
-
+```python
 import tkinter as tk
 from ChartForgeTK import BarChart
-
+```
 # Create window
+```python
 root = tk.Tk()
 root.geometry("800x600")
+```
 
 # Create and configure chart
+```python
 chart = BarChart(root, width=780, height=520)
 chart.pack(fill="both", expand=True)
+```
 
 # Plot data
+```python
 data = [10, 20, 15, 25, 30]
 labels = ["Q1", "Q2", "Q3", "Q4", "Q5"]
 chart.plot(data, labels)
-
+```
 # Start application
+```python
 root.mainloop()
-
+```
 🎯 Complete Dashboard Example
 
 Here’s an advanced example demonstrating a multi-tab dashboard with various chart types:

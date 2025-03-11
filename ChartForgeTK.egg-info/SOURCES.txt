@@ -23,12 +23,3 @@ ChartForgeTK.egg-info/SOURCES.txt
 ChartForgeTK.egg-info/dependency_links.txt
 ChartForgeTK.egg-info/requires.txt
 ChartForgeTK.egg-info/top_level.txt
-examples/advanced_charts_example.py
-examples/animated_charts_example.py
-examples/demo_charts.py
-examples/display_modes_example.py
-examples/heatmap_demo.py
-examples/network_demo.py
-examples/realtime_example.py
-examples/showcase_demo.py
-examples/tkinter_example.py
