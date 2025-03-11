@@ -10,6 +10,7 @@ dist/
 downloads/
 eggs/
 .eggs/
+.fleet/
 lib/
 lib64/
 parts/
