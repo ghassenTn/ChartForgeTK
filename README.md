@@ -136,6 +136,9 @@ if __name__ == "__main__":
     app = ChartApp()
     app.mainloop()
 ```
+Here's an detailed example : "[text](https://github.com/ghassenTn/ChartForgeTK/blob/main/showcase.py)"
+
+
 📋 Requirements
 
 Python 3.6+
