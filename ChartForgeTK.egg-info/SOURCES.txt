@@ -3,7 +3,6 @@ MANIFEST.in
 README.md
 setup.py
 ChartForgeTK/__init__.py
-ChartForgeTK/animations.py
 ChartForgeTK/bar.py
 ChartForgeTK/boxplot.py
 ChartForgeTK/bubble.py
@@ -13,7 +12,6 @@ ChartForgeTK/gant.py
 ChartForgeTK/heatmap.py
 ChartForgeTK/histograme.py
 ChartForgeTK/line.py
-ChartForgeTK/linetest.py
 ChartForgeTK/network.py
 ChartForgeTK/pie.py
 ChartForgeTK/scatter.py

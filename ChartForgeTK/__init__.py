@@ -13,7 +13,7 @@ from .tableau import TableauChart
 from .gant import GanttChart
 # from .area import AreaChart
 
-__version__ = "1.0.2"
+__version__ = "1.2.1"
 __all__ = [
     'Chart',
     'LineChart',
@@ -27,5 +27,5 @@ __all__ = [
     'Histogram',
     'CandlestickChart',
     'TableauChart',
-    'GanttChart'
+    'GanttChart',
 ]

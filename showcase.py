@@ -1,3 +1,21 @@
+# Copyright (c) Ghassen Saidi (2024-2025) - ChartForgeTK
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# GitHub: https://github.com/ghassenTn
+
+
+
 import tkinter as tk
 from tkinter import ttk
 from ChartForgeTK import (
@@ -14,7 +32,6 @@ from ChartForgeTK import (
     TableauChart,
     GanttChart 
 )
-import ttkbootstrap as ttkbs
 import random
 import math
 from typing import List, Tuple
@@ -26,7 +43,7 @@ class ChartApp(tk.Tk):
         self.geometry("800x600")
         notebook = ttk.Notebook(self)
         notebook.pack(fill='both', expand=True, padx=10, pady=10)
-        # Bar Chart Tab (existing)
+        # Bar Chart Tab 
         bar_frame = ttk.Frame(notebook)
         notebook.add(bar_frame, text="Bar Chart")
         bar_chart = BarChart(bar_frame, width=780, height=520)
@@ -36,16 +53,19 @@ class ChartApp(tk.Tk):
         bar_labels = ["Q1", "Q2", "Q3", "Q4","Q5"]
         bar_chart.plot(bar_data, bar_labels)
         ttk.Button(bar_frame, text="Refresh Data", command=self.refresh_bar_data).pack(pady=5)
-        # Line Chart Tab (existing)
+        # Line Chart Tab 
         line_frame = ttk.Frame(notebook)
         notebook.add(line_frame, text="Line Chart")
         line_chart = LineChart(line_frame, width=780, height=520)
         line_chart.pack(fill='both', expand=True)
         self.line_chart = line_chart
-        line_data = [10, 15, 13, 18, 16, 20]
-        line_chart.plot(line_data)
+        line_chart.plot([
+            {'data': [10, 15, 13, 18, 16, 20], 'color': '#FF0000', 'shape': 'circle', 'label': 'Red Circles'},
+            {'data': [5, 8, 7, 12, 10, 15], 'color': '#00FF00', 'shape': 'square', 'label': 'Green Squares'},
+            {'data': [15, 12, 14, 10, 13, 11], 'color': '#0000FF', 'shape': 'triangle', 'label': 'Blue Triangles'}
+        ])
         ttk.Button(line_frame, text="Refresh Data", command=self.refresh_line_data).pack(pady=5)
-        # Pie Chart Tab (existing)
+        # Pie Chart Tab
         pie_frame = ttk.Frame(notebook)
         notebook.add(pie_frame, text="Pie Chart")
         pie_chart = PieChart(pie_frame, width=780, height=520)
@@ -56,7 +76,7 @@ class ChartApp(tk.Tk):
         pie_chart.plot(pie_data, pie_labels)
         ttk.Button(pie_frame, text="Refresh Data", command=self.refresh_pie_data).pack(pady=5)
         
-        # Scatter Plot Tab (existing)
+        # Scatter Plot Tab
         scatter_frame = ttk.Frame(notebook)
         notebook.add(scatter_frame, text="Scatter Plot")
         scatter_chart = ScatterPlot(scatter_frame, width=780, height=520)
@@ -66,7 +86,7 @@ class ChartApp(tk.Tk):
         scatter_chart.plot(scatter_data)
         ttk.Button(scatter_frame, text="Refresh Data", command=self.refresh_scatter_data).pack(pady=5)
         
-        # Bubble Chart Tab (existing)
+        # Bubble Chart Tab 
         bubble_frame = ttk.Frame(notebook)
         notebook.add(bubble_frame, text="Bubble Chart")
         bubble_chart = BubbleChart(bubble_frame, width=780, height=520)
@@ -76,7 +96,7 @@ class ChartApp(tk.Tk):
         bubble_chart.plot(bubble_data)
         ttk.Button(bubble_frame, text="Refresh Data", command=self.refresh_bubble_data).pack(pady=5)
         
-        # Box Plot Tab (existing)
+        # Box Plot Tab
         box_frame = ttk.Frame(notebook)
         notebook.add(box_frame, text="Box Plot")
         box_chart = BoxPlot(box_frame, width=780, height=520)
@@ -88,7 +108,7 @@ class ChartApp(tk.Tk):
         box_chart.plot(box_data, box_labels)
         ttk.Button(box_frame, text="Refresh Data", command=self.refresh_box_data).pack(pady=5)
         
-        # Histogram Tab (existing)
+        # Histogram Tab 
         hist_frame = ttk.Frame(notebook)
         notebook.add(hist_frame, text="Histogram")
         hist_chart = Histogram(hist_frame, width=780, height=520)
@@ -97,35 +117,6 @@ class ChartApp(tk.Tk):
         hist_data = [1, 1.5, 2, 2, 2.5, 3, 3, 3.5, 4, 4.5, 5, 5, 5.5, 6, 6.5]
         hist_chart.plot(hist_data, bins=5)
         ttk.Button(hist_frame, text="Refresh Data", command=self.refresh_hist_data).pack(pady=5)
-        #Gant Chart Tab
-        tasks = [
-            (f"Task {i}", random.randint(0, 50), random.randint(1, 10))
-            for i in range(100)
-        ]
-        gant_frame = ttk.Frame(notebook,width=400,height=500)
-        notebook.add(gant_frame,text="Gant Chart")
-        gantt_chart = GanttChart(gant_frame, theme='dark')
-        gantt_chart.pack(fill='both', expand=True)
-        self.gantt_chart = gantt_chart
-        gantt_data = [
-            ("Task 1", 0, 5),
-            ("Task 2", 2, 4),
-            ("Task 3", 5, 3),
-            ("Task 4", 7, 6),
-        ]
-        gantt_chart.plot(gantt_data)
-        # Candlestick Chart Tab (existing)
-        candle_frame = ttk.Frame(notebook)
-        notebook.add(candle_frame, text="Candlestick Chart")
-        candle_chart = CandlestickChart(candle_frame, width=780, height=520)
-        candle_chart.pack(fill='both', expand=True)
-        self.candle_chart = candle_chart
-        candle_data = [(1, 100.0, 102.5, 99.0, 101.5), (2, 101.5, 103.0, 100.5, 102.8),
-                      (3, 102.8, 104.0, 102.0, 102.2), (4, 102.2, 103.5, 101.0, 103.0),
-                      (5, 103.0, 104.5, 102.5, 103.8)]
-        candle_chart.plot(candle_data)
-        ttk.Button(candle_frame, text="Refresh Data", command=self.refresh_candle_data).pack(pady=5)
-        
         # Tableau Chart Tab
         tableau_frame = ttk.Frame(notebook,width=1200,height=500)
         notebook.add(tableau_frame, text="Tableau Chart")
@@ -150,8 +141,30 @@ class ChartApp(tk.Tk):
         self.bar_chart.plot(new_data, new_labels)
 
     def refresh_line_data(self):
-        new_data = [random.randint(5, 400) for _ in range(5)]
-        self.line_chart.plot(new_data)
+        shapes = ['circle', 'square', 'triangle']
+        colors = ['#FF0000', '#00FF00', '#0000FF']  # Red, Green, Blue        
+        line_data = [
+            {
+                'data': [random.randint(5, 30) for _ in range(7)],
+                'color': colors[0],
+                'shape': shapes[0],
+                'label': 'Red Circles'
+            },
+            {
+                'data': [random.randint(5, 30) for _ in range(7)],
+                'color': colors[1],
+                'shape': shapes[1],
+                'label': 'Green Squares'
+            },
+            {
+                'data': [random.randint(5, 30) for _ in range(7)],
+                'color': colors[2],
+                'shape': shapes[2],
+                'label': 'Blue Triangles'
+            }
+        ]
+        
+        self.line_chart.plot(line_data)
 
     def refresh_pie_data(self):
         new_data = [random.randint(10, 40) for _ in range(4)]
@@ -208,7 +221,6 @@ class ChartApp(tk.Tk):
             } for _ in range(random.randint(5, 10))
         ]
         self.tableau_chart.plot(new_data)
-from datetime import datetime, timedelta
 
 if __name__ == "__main__":
     app = ChartApp()
