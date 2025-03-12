@@ -42,7 +42,7 @@ setup(
         "Programming Language :: Python :: 3.11",
         "Topic :: Scientific/Engineering :: Visualization",
         "Topic :: Software Development :: Libraries :: Python Modules",
-        "Framework :: Matplotlib",
+        "Framework :: tkinter",
         "Operating System :: OS Independent",
     ],
     keywords="chart, graph, visualization, tkinter, gui, plot, matplotlib alternative",
