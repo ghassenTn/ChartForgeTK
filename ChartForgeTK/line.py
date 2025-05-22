@@ -7,7 +7,7 @@ import sys
 sys.setrecursionlimit(10**8)
 
 class LineChart(Chart):
-    def __init__(self, parent=None, width: int = 800, height: int = 600, display_mode='frame', use_container_width_height: bool = False):
+    def __init__(self, parent=None, width: int = 800, height: int = 600, display_mode='frame', use_container_width_height: bool = False, show_point_labels: bool = True):
         super().__init__(parent, width=width, height=height, display_mode=display_mode)
         self.datasets = []
         self.points = {}  # Now stores (x_pixel, y_pixel, data_index) tuples
@@ -23,6 +23,7 @@ class LineChart(Chart):
         self.max_zoom = 10.0
         self.zoom_step = 0.2
         self.use_container_width_height = use_container_width_height
+        self.show_point_labels = show_point_labels
 
         if self.use_container_width_height and self.parent:
             self.parent.bind('<Configure>', self._on_parent_resize)
@@ -101,6 +102,7 @@ class LineChart(Chart):
             y_min = max(full_y_min, self.zoom_center_y - y_range / 2)
             y_max = min(full_y_max, self.zoom_center_y + y_range / 2)
 
+        self.canvas.delete('label')
         self.canvas.delete('all')
         self._draw_axes(x_min, x_max, y_min, y_max)
 
@@ -146,6 +148,8 @@ class LineChart(Chart):
             )
 
     def _animate_lines(self, y_min: float, y_max: float):
+        MAX_POINTS_FOR_FULL_LABELS = 50
+        LABEL_DECIMATION_FACTOR = 10
         lines = {}
         shadows = {}
         dots = {}
@@ -174,13 +178,15 @@ class LineChart(Chart):
                 fill_color = self._clamp_color(self.style.adjust_brightness(dataset['color'], 1.2))
                 outline_color = self._clamp_color(self.style.adjust_brightness(dataset['color'], 0.8))
                 dot = self._create_shape(x, y, dataset['shape'], self.dot_radius, fill_color, outline_color)
-                label = self.canvas.create_text(
-                    x, y - 15, text=f"{dataset['data'][data_idx]:,.2f}",
-                    font=self.style.VALUE_FONT, fill=self.style.TEXT,
-                    anchor='s', tags=('label', f'point_{idx}_0')
-                )
                 dots[idx] = [dot]
-                labels[idx] = [label]
+                labels[idx] = []
+                if self.show_point_labels:
+                    label = self.canvas.create_text(
+                        x, y - 15, text=f"{dataset['data'][data_idx]:,.2f}",
+                        font=self.style.VALUE_FONT, fill=self.style.TEXT,
+                        anchor='s', tags=('label', f'point_{idx}_0')
+                    )
+                    labels[idx].append(label)
             else:
                 dots[idx] = []
                 labels[idx] = []
@@ -208,9 +214,10 @@ class LineChart(Chart):
                     if i < len(dots[idx]) and progress * len(self.points[idx]) >= i + 1:
                         self.canvas.coords(dots[idx][i], x1 - self.dot_radius, y1 - self.dot_radius,
                                            x1 + self.dot_radius, y1 + self.dot_radius)
-                        self.canvas.coords(labels[idx][i], x1, y1 - 15)
                         self.canvas.itemconfig(dots[idx][i], state='normal')
-                        self.canvas.itemconfig(labels[idx][i], state='normal')
+                        if self.show_point_labels and i < len(labels[idx]):
+                            self.canvas.coords(labels[idx][i], x1, y1 - 15)
+                            self.canvas.itemconfig(labels[idx][i], state='normal')
 
                 self.canvas.coords(shadows[idx], *current_points)
                 self.canvas.coords(lines[idx], *current_points)
@@ -221,13 +228,23 @@ class LineChart(Chart):
                             fill_color = self._clamp_color(self.style.adjust_brightness(dataset['color'], 1.2))
                             outline_color = self._clamp_color(self.style.adjust_brightness(dataset['color'], 0.8))
                             dot = self._create_shape(x, y, dataset['shape'], self.dot_radius, fill_color, outline_color)
-                            label = self.canvas.create_text(
-                                x, y - 15, text=f"{dataset['data'][data_idx]:,.2f}",
-                                font=self.style.VALUE_FONT, fill=self.style.TEXT,
-                                anchor='s', tags=('label', f'point_{idx}_{i}')
-                            )
                             dots[idx].append(dot)
-                            labels[idx].append(label)
+                            if self.show_point_labels:
+                                if len(dataset['data']) > MAX_POINTS_FOR_FULL_LABELS:
+                                    if data_idx % LABEL_DECIMATION_FACTOR == 0:
+                                        label = self.canvas.create_text(
+                                            x, y - 15, text=f"{dataset['data'][data_idx]:,.2f}",
+                                            font=self.style.VALUE_FONT, fill=self.style.TEXT,
+                                            anchor='s', tags=('label', f'point_{idx}_{i}')
+                                        )
+                                        labels[idx].append(label)
+                                else:
+                                    label = self.canvas.create_text(
+                                        x, y - 15, text=f"{dataset['data'][data_idx]:,.2f}",
+                                        font=self.style.VALUE_FONT, fill=self.style.TEXT,
+                                        anchor='s', tags=('label', f'point_{idx}_{i}')
+                                    )
+                                    labels[idx].append(label)
 
             if frame < total_frames:
                 self.canvas.after(16, update_animation, frame + 1, total_frames)
