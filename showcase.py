@@ -135,6 +135,41 @@ class ChartApp(tk.Tk):
         tableau_chart.plot(tableau_data)
         ttk.Button(tableau_frame, text="Refresh Data", command=self.refresh_tableau_data).pack(pady=5)
 
+        # Line Chart Label Options Tab
+        line_label_options_frame = ttk.Frame(notebook)
+        notebook.add(line_label_options_frame, text="Line Chart Labels")
+
+        # Prepare large dataset
+        large_data_points = [math.sin(i / 10) * 100 + (i / 2) for i in range(200)]
+        datasets_large = [
+            {
+                'data': large_data_points,
+                'color': '#FF5733',
+                'label': 'Large Dataset (Sine Wave)'
+            }
+        ]
+
+        # Chart 1: Default labels (decimated)
+        label1 = ttk.Label(line_label_options_frame, text="Default Labels (Decimated for large datasets):")
+        label1.pack(pady=(10,2))
+        line_chart_default_labels = LineChart(line_label_options_frame, width=780, height=180, use_container_width_height=False) # Fixed height for visibility
+        line_chart_default_labels.pack(fill='x', expand=False)
+        line_chart_default_labels.plot(datasets_large)
+
+        # Chart 2: Labels explicitly off
+        label2 = ttk.Label(line_label_options_frame, text="Labels Explicitly Off (show_point_labels=False):")
+        label2.pack(pady=(10,2))
+        line_chart_labels_off = LineChart(line_label_options_frame, width=780, height=180, show_point_labels=False, use_container_width_height=False) # Fixed height
+        line_chart_labels_off.pack(fill='x', expand=False)
+        line_chart_labels_off.plot(datasets_large)
+
+        # Chart 3: Labels explicitly on (decimated)
+        label3 = ttk.Label(line_label_options_frame, text="Labels Explicitly On (show_point_labels=True, Decimated):")
+        label3.pack(pady=(10,2))
+        line_chart_labels_on = LineChart(line_label_options_frame, width=780, height=180, show_point_labels=True, use_container_width_height=False) # Fixed height
+        line_chart_labels_on.pack(fill='x', expand=False)
+        line_chart_labels_on.plot(datasets_large)
+
     def refresh_bar_data(self):
         new_data = [random.randint(5, 30) for _ in range(4)]
         new_labels = ["Q1", "Q2", "Q3", "Q4"]
