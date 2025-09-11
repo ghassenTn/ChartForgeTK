@@ -1,10 +1,12 @@
+[![PyPI version](https://badge.fury.io/py/chartforgetk.svg)](https://pypi.org/project/chartforgetk/)
+
 ChartForgeTK
 
 ChartForgeTK is a powerful and intuitive Python charting library built purely on Tkinter. It brings modern, interactive data visualization to desktop applications with zero external dependencies. Designed for data scientists, developers, and enthusiasts, ChartForgeTK makes creating beautiful charts in Tkinter applications effortless.
 ![Screenshot From 2025-03-10 09-59-06](https://github.com/user-attachments/assets/f63687dc-d73a-49e6-920b-b1c293756c05)
 
 🚀 Why Choose ChartForgeTK?
-[![PyPI version](https://badge.fury.io/py/chartforgetk.svg)](https://pypi.org/project/chartforgetk/)
+
 
 
 ✅ Completely Standalone – No external dependencies, just pure Tkinter.
