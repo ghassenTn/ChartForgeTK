@@ -21,8 +21,9 @@ from tkinter import ttk
 import math
 from .core import Chart, ChartStyle
 class CandlestickChart(Chart):
-    def __init__(self, parent=None, width: int = 800, height: int = 600, display_mode='frame', theme='light'):
+    def __init__(self, parent=None, show_labels = True, width: int = 800, height: int = 600, display_mode='frame', theme='light'):
         super().__init__(parent, width=width, height=height, display_mode=display_mode, theme=theme)
+        self.show_labels = show_labels
         self.data = []  # List of (index, open, high, low, close) tuples
         self.candle_width_factor = 0.7  # Slightly wider candles
         self.wick_width = 2  # Thicker wicks for visibility
@@ -94,9 +95,13 @@ class CandlestickChart(Chart):
                 y_bottom = y_mid + candle_height / 2 if close_price >= open_price else y_mid + candle_height / 2
                 
                 # Wick
+                # Calculate midpoint and animate wick from center outwards
+                y_mid_wick = (y_high + y_low) / 2
+                half_wick_length = (y_low - y_high) / 2 * progress
+
                 wick = self.canvas.create_line(
-                    x, y_high - (y_high - y_low) * progress,
-                    x, y_low + (y_low - y_high) * progress,
+                    x, y_mid_wick - half_wick_length,
+                    x, y_mid_wick + half_wick_length,
                     fill=self.style.TEXT_SECONDARY,
                     width=self.wick_width,
                     tags=('wick', f'candle_{i}')
@@ -125,7 +130,7 @@ class CandlestickChart(Chart):
                 )
                 self.elements.append(candle)
                 
-                if progress == 1:
+                if self.show_labels and progress == 1:
                     # High label above wick
                     high_label = self.canvas.create_text(
                         x, y_high - 10,
