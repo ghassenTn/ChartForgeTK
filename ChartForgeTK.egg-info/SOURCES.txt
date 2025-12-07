@@ -7,6 +7,7 @@ ChartForgeTK/bar.py
 ChartForgeTK/boxplot.py
 ChartForgeTK/bubble.py
 ChartForgeTK/candlestik.py
+ChartForgeTK/coordinates.py
 ChartForgeTK/core.py
 ChartForgeTK/gant.py
 ChartForgeTK/heatmap.py
@@ -14,8 +15,10 @@ ChartForgeTK/histograme.py
 ChartForgeTK/line.py
 ChartForgeTK/network.py
 ChartForgeTK/pie.py
+ChartForgeTK/resources.py
 ChartForgeTK/scatter.py
 ChartForgeTK/tableau.py
+ChartForgeTK/validation.py
 ChartForgeTK.egg-info/PKG-INFO
 ChartForgeTK.egg-info/SOURCES.txt
 ChartForgeTK.egg-info/dependency_links.txt

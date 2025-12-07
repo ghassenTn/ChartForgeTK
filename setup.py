@@ -19,7 +19,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="ChartForgeTK",
-    version="1.2.1",
+    version="2.0.0",
     packages=["ChartForgeTK"],  
     package_dir={"ChartForgeTK": "ChartForgeTK"}, 
     install_requires=[
@@ -42,7 +42,6 @@ setup(
         "Programming Language :: Python :: 3.11",
         "Topic :: Scientific/Engineering :: Visualization",
         "Topic :: Software Development :: Libraries :: Python Modules",
-        "Framework :: tkinter",
         "Operating System :: OS Independent",
     ],
     keywords="chart, graph, visualization, tkinter, gui, plot, matplotlib alternative",

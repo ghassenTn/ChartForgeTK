@@ -1,6 +1,6 @@
-Metadata-Version: 2.2
+Metadata-Version: 2.4
 Name: ChartForgeTK
-Version: 1.2.1
+Version: 2.0.0
 Summary: A modern, smooth, and dynamic charting library for Python using pure Tkinter
 Home-page: https://github.com/ghassenTn/ChartForgeTK
 Author: Ghassen
@@ -19,7 +19,6 @@ Classifier: Programming Language :: Python :: 3.10
 Classifier: Programming Language :: Python :: 3.11
 Classifier: Topic :: Scientific/Engineering :: Visualization
 Classifier: Topic :: Software Development :: Libraries :: Python Modules
-Classifier: Framework :: Matplotlib
 Classifier: Operating System :: OS Independent
 Requires-Python: >=3.8
 Description-Content-Type: text/markdown
@@ -32,190 +31,594 @@ Dynamic: description
 Dynamic: description-content-type
 Dynamic: home-page
 Dynamic: keywords
+Dynamic: license-file
 Dynamic: project-url
 Dynamic: requires-dist
 Dynamic: requires-python
 Dynamic: summary
 
-ChartForgeTK
+[![PyPI version](https://badge.fury.io/py/chartforgetk.svg)](https://pypi.org/project/chartforgetk/)
+[![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
+[![Tkinter](https://img.shields.io/badge/Framework-Tkinter-orange.svg)](https://docs.python.org/3/library/tkinter.html)
 
-ChartForgeTK is a powerful and intuitive Python charting library built purely on Tkinter. It brings modern, interactive data visualization to desktop applications with zero external dependencies. Designed for data scientists, developers, and enthusiasts, ChartForgeTK makes creating beautiful charts in Tkinter applications effortless.
-![Screenshot From 2025-03-10 09-59-06](https://github.com/user-attachments/assets/f63687dc-d73a-49e6-920b-b1c293756c05)
+# ChartForgeTK
 
-🚀 Why Choose ChartForgeTK?
+A powerful and intuitive Python charting library built purely on Tkinter. ChartForgeTK brings modern, interactive data visualization to desktop applications with zero external dependencies.
 
-✅ Completely Standalone – No external dependencies, just pure Tkinter.
-✅ Rich Charting Capabilities – Supports a wide variety of charts.
-✅ Highly Customizable – Theming, flexible sizing, and adaptable layouts.
-✅ Interactive & Dynamic – Easily refresh and update data.
-✅ Lightweight & Fast – Ideal for small and large-scale Tkinter applications.
+![ChartForgeTK Dashboard](https://github.com/user-attachments/assets/f63687dc-d73a-49e6-920b-b1c293756c05)
 
-🌟 Features
+---
 
-📊 Comprehensive Chart Types
+## Table of Contents
 
-Bar Charts – Great for categorical comparisons.
+- [Why ChartForgeTK?](#-why-chartforgetk)
+- [Features](#-features)
+- [Installation](#-installation)
+- [Quick Start](#-quick-start)
+- [Chart Types](#-chart-types)
+- [Pandas Integration](#-pandas-integration)
+- [API Reference](#-api-reference)
+- [Utility Classes](#-utility-classes)
+- [Customization](#-customization)
+- [Stability & Reliability](#-stability--reliability-v20)
+- [Examples](#-examples)
+- [Roadmap](#-roadmap)
+- [Contributing](#-contributing)
+- [License](#-license)
 
-Line Charts – Ideal for trends and time-series data.
+---
 
-Pie Charts – Perfect for proportion-based data visualization.
+## 🚀 Why ChartForgeTK?
 
-Scatter Plots – Analyze relationships between data points.
+| Feature | ChartForgeTK |
+|---------|--------------|
+| Dependencies | Zero external dependencies - pure Tkinter |
+| Chart Types | 12+ chart types for any visualization need |
+| Customization | Light/Dark themes, flexible sizing |
+| Interactivity | Tooltips, hover effects, click events |
+| Data Sources | Lists, pandas DataFrames, pandas Series |
+| Performance | Lightweight, fast rendering with animations |
+| Stability | Comprehensive input validation (v2.0) |
 
-Bubble Charts – Scatter plots with size-encoded values.
+---
 
-Box Plots – Visualize data distribution and outliers.
+## ✨ Features
 
-Histograms – Display frequency distributions.
+### Chart Types
 
-Gantt Charts – Plan projects and visualize timelines.
+| Chart | Description | Best For |
+|-------|-------------|----------|
+| Bar Chart | Vertical bars with animations | Categorical comparisons |
+| Line Chart | Multi-series with markers | Trends, time-series |
+| Pie Chart | 2D/3D with slice selection | Proportions |
+| Scatter Plot | X-Y coordinate plotting | Correlations |
+| Bubble Chart | Scatter with size encoding | 3-variable data |
+| Box Plot | Statistical distribution | Outlier detection |
+| Histogram | Frequency distribution | Data distribution |
+| Gantt Chart | Timeline visualization | Project planning |
+| Candlestick | OHLC financial data | Stock analysis |
+| Heat Map | Color-coded matrices | Pattern recognition |
+| Network Graph | Node-edge visualization | Relationships |
+| Tableau Chart | Enhanced data tables | Tabular display |
 
-Candlestick Charts – Financial market trends at a glance.
+### Interactive Features
 
-Tableau Charts – Enhanced table-based visual representation.
+- Animated chart rendering with smooth transitions
+- Hover tooltips with detailed information
+- Click-to-select functionality (pie charts)
+- Dynamic data refresh without flickering
+- Responsive layouts with auto-resize support
 
-✨ Interactive Features
-
-Refreshable Data – Update charts dynamically.
-
-Tabbed Interface – Organize multiple visualizations seamlessly.
-
-Responsive Layouts – Adaptive resizing for different screen sizes.
-
-🎯 Zero External Dependencies
-
-Built entirely with Tkinter – No need for third-party libraries.
-
-Lightweight and native Python implementation.
-
-🎨 Customization Options
-
-Theme Support – Light/Dark modes.
-
-Configurable Sizes – Adjust chart dimensions easily.
-
-Flexible Data Formatting – Adapt charts to specific needs.
-
-📦 Installation
-
-Install ChartForgeTK using pip:
+### Pandas Integration (New!)
 
 ```python
+import pandas as pd
+from ChartForgeTK import BarChart
+
+df = pd.DataFrame({
+    'quarter': ['Q1', 'Q2', 'Q3', 'Q4'],
+    'sales': [150, 200, 175, 225]
+})
+
+chart = BarChart(root, width=600, height=400)
+chart.plot(df, value_column='sales', label_column='quarter')
+```
+
+---
+
+## 📦 Installation
+
+```bash
 pip install ChartForgeTK
 ```
-🚀 Quick Start
 
-Here's a simple example to get you started:
+### Requirements
+
+- Python 3.8+
+- Tkinter (included with Python)
+- Optional: pandas (for DataFrame support)
+
+---
+
+## 🚀 Quick Start
+
 ```python
 import tkinter as tk
 from ChartForgeTK import BarChart
-```
-# Create window
-```python
-root = tk.Tk()
-root.geometry("800x600")
-```
 
-# Create and configure chart
-```python
+# Create window
+root = tk.Tk()
+root.title("My First Chart")
+root.geometry("800x600")
+
+# Create chart
 chart = BarChart(root, width=780, height=520)
 chart.pack(fill="both", expand=True)
-```
 
 # Plot data
-```python
-data = [10, 20, 15, 25, 30]
-labels = ["Q1", "Q2", "Q3", "Q4", "Q5"]
-chart.plot(data, labels)
-```
-# Start application
-```python
+chart.plot(
+    data=[10, 20, 15, 25, 30],
+    labels=["Q1", "Q2", "Q3", "Q4", "Q5"]
+)
+
 root.mainloop()
 ```
-🎯 Complete Dashboard Example
 
-Here’s an advanced example demonstrating a multi-tab dashboard with various chart types:
+---
+
+## 📊 Chart Types
+
+### Bar Chart
+
+```python
+from ChartForgeTK import BarChart
+
+chart = BarChart(parent, width=600, height=400, theme='light')
+chart.plot([10, 20, 15, 25], ["A", "B", "C", "D"])
+```
+
+### Line Chart
+
+```python
+from ChartForgeTK import LineChart
+
+# Single series
+chart = LineChart(parent, width=600, height=400)
+chart.plot([10, 15, 13, 18, 16, 20])
+
+# Multiple series
+chart.plot([
+    {'data': [10, 15, 13, 18], 'color': '#FF0000', 'label': 'Series A'},
+    {'data': [5, 8, 12, 10], 'color': '#00FF00', 'label': 'Series B'}
+])
+```
+
+### Pie Chart
+
+```python
+from ChartForgeTK import PieChart
+
+# 2D Pie Chart
+chart = PieChart(parent, width=600, height=400)
+chart.plot([30, 20, 15, 35], ["A", "B", "C", "D"])
+
+# 3D Pie Chart
+chart_3d = PieChart(parent, width=600, height=400, is_3d=True)
+chart_3d.plot([30, 20, 15, 35], ["A", "B", "C", "D"])
+```
+
+### Scatter Plot
+
+```python
+from ChartForgeTK import ScatterPlot
+
+chart = ScatterPlot(parent, width=600, height=400)
+chart.plot([(1, 10), (2, 15), (3, 13), (4, 18), (5, 16)])
+```
+
+### Box Plot
+
+```python
+from ChartForgeTK import BoxPlot
+
+data = [
+    [1, 2, 3, 4, 5, 6, 7],
+    [2, 4, 6, 8, 10, 12, 14],
+    [1, 3, 5, 7, 9, 11, 20]
+]
+chart = BoxPlot(parent, width=600, height=400)
+chart.plot(data, ["Group A", "Group B", "Group C"])
+```
+
+### Histogram
+
+```python
+from ChartForgeTK import Histogram
+
+data = [1, 1.5, 2, 2, 2.5, 3, 3, 3.5, 4, 4.5, 5]
+chart = Histogram(parent, width=600, height=400)
+chart.plot(data, bins=5)
+```
+
+### Candlestick Chart
+
+```python
+from ChartForgeTK import CandlestickChart
+
+# Format: (index, open, high, low, close)
+data = [
+    (1, 100, 105, 98, 103),
+    (2, 103, 108, 101, 106),
+    (3, 106, 110, 104, 108)
+]
+chart = CandlestickChart(parent, width=600, height=400)
+chart.plot(data)
+```
+
+---
+
+## 🐼 Pandas Integration
+
+ChartForgeTK seamlessly integrates with pandas DataFrames and Series.
+
+### DataFrame with BarChart
+
+```python
+import pandas as pd
+from ChartForgeTK import BarChart
+
+df = pd.DataFrame({
+    'category': ['Q1', 'Q2', 'Q3', 'Q4'],
+    'sales': [150, 200, 175, 225]
+})
+
+chart = BarChart(parent, width=600, height=400)
+chart.plot(df, value_column='sales', label_column='category')
+```
+
+### Series with PieChart
+
+```python
+import pandas as pd
+from ChartForgeTK import PieChart
+
+series = pd.Series(
+    [30, 25, 20, 15, 10],
+    index=['Product A', 'Product B', 'Product C', 'Product D', 'Product E']
+)
+
+chart = PieChart(parent, width=600, height=400)
+chart.plot(series)  # Index becomes labels automatically
+```
+
+### Multi-Series LineChart from DataFrame
+
+```python
+import pandas as pd
+from ChartForgeTK import LineChart
+
+df = pd.DataFrame({
+    'month': ['Jan', 'Feb', 'Mar', 'Apr', 'May'],
+    'revenue': [100, 120, 115, 130, 145],
+    'expenses': [80, 85, 90, 95, 100],
+    'profit': [20, 35, 25, 35, 45]
+})
+
+chart = LineChart(parent, width=600, height=400)
+chart.plot(df, y_columns=['revenue', 'expenses', 'profit'], label_column='month')
+```
+
+### ScatterPlot from DataFrame
+
+```python
+import pandas as pd
+from ChartForgeTK import ScatterPlot
+
+df = pd.DataFrame({
+    'height': [160, 165, 170, 175, 180],
+    'weight': [55, 60, 65, 70, 75]
+})
+
+chart = ScatterPlot(parent, width=600, height=400)
+chart.plot(df, x_column='height', y_column='weight')
+```
+
+---
+
+## 📖 API Reference
+
+### Common Parameters
+
+All chart constructors accept these parameters:
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `parent` | Widget | None | Parent Tkinter widget |
+| `width` | int | 800 | Chart width in pixels |
+| `height` | int | 600 | Chart height in pixels |
+| `theme` | str | 'light' | Color theme ('light' or 'dark') |
+| `display_mode` | str | 'frame' | Display mode |
+
+### BarChart.plot()
+
+```python
+chart.plot(
+    data,                    # List[float] or DataFrame
+    labels=None,             # Optional[List[str]]
+    value_column=None,       # Column name for DataFrame
+    label_column=None        # Column name for DataFrame labels
+)
+```
+
+### LineChart.plot()
+
+```python
+chart.plot(
+    data,                    # List[float], List[Dict], or DataFrame
+    x_min=None,              # Optional axis limits
+    x_max=None,
+    y_min=None,
+    y_max=None,
+    y_columns=None,          # List of column names for multi-series
+    label_column=None        # Column name for x-axis labels
+)
+```
+
+### PieChart.plot()
+
+```python
+chart.plot(
+    data,                    # List[float], Series, or DataFrame
+    labels=None,             # Optional[List[str]]
+    value_column=None,       # Column name for DataFrame
+    label_column=None        # Column name for DataFrame labels
+)
+```
+
+---
+
+## 🔧 Utility Classes
+
+### DataValidator
+
+Validate chart inputs before plotting:
+
+```python
+from ChartForgeTK import DataValidator
+
+# Validate numeric data
+data = DataValidator.validate_numeric_list([1, 2, 3, 4, 5])
+
+# Validate dimensions
+width, height = DataValidator.validate_dimensions(800, 600)
+
+# Validate colors
+color = DataValidator.validate_color("#FF5733")
+
+# Validate labels
+labels = DataValidator.validate_labels(["A", "B", "C"], expected_length=3)
+```
+
+### ResourceManager
+
+Manage chart resources for proper cleanup:
+
+```python
+from ChartForgeTK import ResourceManager
+
+# ResourceManager is automatically used by charts
+# Access it for manual resource management
+chart.resource_manager.cancel_animations()
+chart.resource_manager.cleanup_tooltips()
+chart.resource_manager.cleanup()
+```
+
+### CoordinateTransformer
+
+Handle coordinate transformations:
+
+```python
+from ChartForgeTK import CoordinateTransformer
+
+transformer = CoordinateTransformer(width=400, height=300, padding=40)
+x_min, x_max, y_min, y_max = transformer.calculate_ranges(0, 100, 0, 50)
+
+# Convert data coordinates to pixel coordinates
+pixel_x = transformer.data_to_pixel_x(50)
+pixel_y = transformer.data_to_pixel_y(25)
+```
+
+---
+
+## 🎨 Customization
+
+### Themes
+
+```python
+# Light theme (default)
+chart = BarChart(parent, theme='light')
+
+# Dark theme
+chart = BarChart(parent, theme='dark')
+```
+
+### Line Chart Options
+
+```python
+chart = LineChart(
+    parent,
+    width=800,
+    height=600,
+    show_point_labels=True,           # Show/hide value labels
+    use_container_width_height=True   # Auto-resize with parent
+)
+```
+
+### Multi-Series Styling
+
+```python
+chart.plot([
+    {
+        'data': [10, 15, 13, 18],
+        'color': '#FF5733',      # Custom color
+        'shape': 'circle',       # circle, square, triangle, diamond
+        'label': 'Series A'      # Legend label
+    },
+    {
+        'data': [5, 8, 12, 10],
+        'color': '#33FF57',
+        'shape': 'square',
+        'label': 'Series B'
+    }
+])
+```
+
+### Reference Lines
+
+```python
+# Add horizontal reference line
+chart.add_bar('horizontal', value=15, color='#FF0000', label='Target')
+
+# Add vertical reference line
+chart.add_bar('vertical', value=3, color='#0000FF', dash=(4, 2))
+```
+
+---
+
+## 🛡️ Stability & Reliability (v2.0)
+
+ChartForgeTK v2.0 introduces comprehensive stability improvements:
+
+### Input Validation
+
+- Type checking for all chart inputs
+- Clear, descriptive error messages
+- Automatic handling of edge cases (empty data, NaN, infinity)
+
+```python
+# These will raise helpful error messages:
+chart.plot([])                    # ValueError: data cannot be empty
+chart.plot(None)                  # TypeError: data cannot be None
+chart.plot([1, 2], ["A"])         # ValueError: labels length mismatch
+chart.plot([-1, -2])              # ValueError: negative values (bar chart)
+```
+
+### Edge Case Handling
+
+- Single data point rendering
+- Identical value handling with meaningful axis ranges
+- Zero-range data protection against division errors
+- All-zero pie chart detection
+
+### Resource Management
+
+- Proper cleanup of tooltips and animation callbacks
+- Memory leak prevention for long-running applications
+- Safe animation cancellation on chart updates
+
+---
+
+## 📝 Examples
+
+### Complete Dashboard
+
 ```python
 import tkinter as tk
 from tkinter import ttk
-from ChartForgeTK import (
-    LineChart, BarChart, PieChart, BubbleChart,
-    ScatterPlot, BoxPlot, Histogram, GanttChart,
-    CandlestickChart, TableauChart
-)
+from ChartForgeTK import BarChart, LineChart, PieChart
 import random
 
-class ChartApp(tk.Tk):
+class Dashboard(tk.Tk):
     def __init__(self):
         super().__init__()
-        self.title("ChartForgeTK Dashboard")
-        self.geometry("800x600")
+        self.title("Sales Dashboard")
+        self.geometry("1000x700")
         
-        # Create notebook for tabs
         notebook = ttk.Notebook(self)
         notebook.pack(fill='both', expand=True, padx=10, pady=10)
         
         # Bar Chart Tab
         bar_frame = ttk.Frame(notebook)
-        notebook.add(bar_frame, text="Bar Chart")
-        self.bar_chart = BarChart(bar_frame, width=780, height=520)
+        notebook.add(bar_frame, text="Quarterly Sales")
+        
+        self.bar_chart = BarChart(bar_frame, width=950, height=550)
         self.bar_chart.pack(fill='both', expand=True)
-        bar_data = [10, 20, 15, 25, 30]
-        bar_labels = ["Q1", "Q2", "Q3", "Q4", "Q5"]
-        self.bar_chart.plot(bar_data, bar_labels)
-        ttk.Button(bar_frame, text="Refresh Data",
-                  command=self.refresh_bar_data).pack(pady=5)
-
-    def refresh_bar_data(self):
-        new_data = [random.randint(5, 30) for _ in range(5)]
-        new_labels = ["Q1", "Q2", "Q3", "Q4", "Q5"]
-        self.bar_chart.plot(new_data, new_labels)
+        self.bar_chart.plot([150, 200, 175, 225], ["Q1", "Q2", "Q3", "Q4"])
+        
+        ttk.Button(bar_frame, text="Refresh", 
+                   command=self.refresh_bar).pack(pady=5)
+        
+        # Line Chart Tab
+        line_frame = ttk.Frame(notebook)
+        notebook.add(line_frame, text="Trends")
+        
+        self.line_chart = LineChart(line_frame, width=950, height=550)
+        self.line_chart.pack(fill='both', expand=True)
+        self.line_chart.plot([
+            {'data': [10, 15, 13, 18, 16, 20], 'color': '#2563EB', 'label': 'Revenue'},
+            {'data': [8, 10, 9, 12, 11, 14], 'color': '#DC2626', 'label': 'Costs'}
+        ])
+        
+        # Pie Chart Tab
+        pie_frame = ttk.Frame(notebook)
+        notebook.add(pie_frame, text="Market Share")
+        
+        self.pie_chart = PieChart(pie_frame, width=950, height=550)
+        self.pie_chart.pack(fill='both', expand=True)
+        self.pie_chart.plot([35, 25, 20, 15, 5], 
+                           ["Product A", "Product B", "Product C", "Product D", "Other"])
+    
+    def refresh_bar(self):
+        new_data = [random.randint(100, 300) for _ in range(4)]
+        self.bar_chart.plot(new_data, ["Q1", "Q2", "Q3", "Q4"])
 
 if __name__ == "__main__":
-    app = ChartApp()
+    app = Dashboard()
     app.mainloop()
 ```
-📋 Requirements
 
-Python 3.6+
+For more examples, see [showcase.py](https://github.com/ghassenTn/ChartForgeTK/blob/main/showcase.py).
 
-Tkinter (included with Python by default)
+---
 
-🎨 Customization Options
+## 🔮 Roadmap
 
-✅ Resizable Charts – Define custom dimensions.
-✅ Light/Dark Themes – Adapt to user preferences.
-✅ Live Data Updates – Dynamic refresh for real-time changes.
-✅ Tabbed Interface – Organize charts effectively.
-✅ Scalable for Large Datasets – Handles big data efficiently.
+- [x] Stability improvements (v2.0)
+- [x] Pandas DataFrame support
+- [x] Resource management
+- [ ] Radar Charts
+- [ ] Tree Maps
+- [ ] Drag & Drop support
+- [ ] Export to PNG/SVG
+- [ ] Additional themes
 
-🔮 Roadmap
+---
 
-🔹 More Chart Types – Heatmaps, Radar Charts, Tree Maps.
-🔹 Drag & Drop Support – Enhance interactivity.
-🔹 Export Options – Save charts as images or CSV.
-🔹 Extended Styling – More themes and customization.
+## 🤝 Contributing
 
-🤝 Contributing
+Contributions are welcome!
 
-Contributions are always welcome! Here’s how you can help:
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
-1️⃣ Fork the repository
-2️⃣ Create a feature branch (git checkout -b feature-newchart)
-3️⃣ Commit your changes (git commit -m "Added new chart type")
-4️⃣ Push to your branch (git push origin feature-newchart)
-5️⃣ Open a Pull Request 🚀
+---
 
-📄 License
+## 📄 License
 
-ChartForgeTK is open-source and released under the MIT License.
+ChartForgeTK is open-source and released under the [MIT License](LICENSE).
 
-📬 Contact & Support
+---
 
-💡 Found an issue? Have a suggestion? We’d love to hear from you!
+## 📬 Contact & Support
 
-Submit an Issue – Report bugs and feature requests on GitHub.
+- [Report Issues](https://github.com/ghassenTn/ChartForgeTK/issues)
+- [Source Code](https://github.com/ghassenTn/ChartForgeTK)
+- Author: Ghassen Saidi
 
-Reach Out to Maintainers – Connect through the repository.
+---
 
-🔥 Bring your Tkinter apps to life with ChartForgeTK! 🚀
+**Bring your Tkinter apps to life with ChartForgeTK!** 🚀
