@@ -19,10 +19,18 @@ from typing import List, Dict, Union, Optional
 import tkinter as tk
 from tkinter import ttk
 import math
+import logging
 from .core import Chart, ChartStyle
+from .validation import DataValidator
+
+logger = logging.getLogger('ChartForgeTK')
+
+
 class TableauChart(Chart):
     """
     A Tableau-style chart for displaying tabular data with interactive features like sorting and filtering.
+    
+    Requirements: 1.1, 1.2, 1.3, 2.1, 3.1, 3.2, 3.6, 9.1, 9.2
     
     Attributes:
         parent (tk.Widget): The parent widget.
@@ -72,17 +80,72 @@ class TableauChart(Chart):
             columns (Optional[List[str]]): The columns to be displayed.
 
         Raises:
-            ValueError: If data is empty or not a list of dictionaries, or if specified columns do not exist in data.
+            TypeError: If data is None or not a list of dictionaries
+            ValueError: If data is empty or if specified columns do not exist in data.
+            
+        Requirements: 1.1, 1.2, 1.3, 2.1, 3.1, 3.2, 3.6, 9.1, 9.2, 9.3, 9.4
         """
-        if not data or not all(isinstance(d, dict) for d in data):
-            raise ValueError("Data must be a non-empty list of dictionaries")
+        # Validate data is not None (Requirements: 1.1)
+        if data is None:
+            raise TypeError(
+                "[ChartForgeTK] Error: data cannot be None. "
+                "Please provide a list of dictionaries."
+            )
         
-        self.data = data
-        available_columns = list(data[0].keys())
-        self.columns = columns if columns else available_columns
+        # Validate data is a list (Requirements: 1.3)
+        if not isinstance(data, (list, tuple)):
+            raise TypeError(
+                f"[ChartForgeTK] Error: data must be a list, "
+                f"got {type(data).__name__}."
+            )
         
-        if not all(col in available_columns for col in self.columns):
-            raise ValueError("Specified columns must exist in data")
+        # Validate data is not empty (Requirements: 1.2)
+        if not data:
+            raise ValueError(
+                "[ChartForgeTK] Error: data cannot be empty. "
+                "Please provide at least one row of data."
+            )
+        
+        # Validate all items are dictionaries
+        for i, row in enumerate(data):
+            if not isinstance(row, dict):
+                raise TypeError(
+                    f"[ChartForgeTK] Error: data[{i}] must be a dictionary, "
+                    f"got {type(row).__name__}."
+                )
+        
+        # Cancel pending animations before redrawing (Requirements: 3.2, 3.6)
+        self.resource_manager.cancel_animations()
+        
+        # Clean up previous tooltips (Requirements: 3.1)
+        self.resource_manager.cleanup_tooltips()
+        
+        # Create deep copy for immutability (Requirements: 9.1, 9.2)
+        self.data = [dict(row) for row in data]
+        available_columns = list(self.data[0].keys())
+        
+        # Validate and copy columns list (Requirements: 9.3)
+        if columns is not None:
+            if not isinstance(columns, (list, tuple)):
+                raise TypeError(
+                    f"[ChartForgeTK] Error: columns must be a list, "
+                    f"got {type(columns).__name__}."
+                )
+            self.columns = [str(col) for col in columns]
+            
+            # Validate all specified columns exist
+            for col in self.columns:
+                if col not in available_columns:
+                    raise ValueError(
+                        f"[ChartForgeTK] Error: Column '{col}' does not exist in data. "
+                        f"Available columns: {available_columns}"
+                    )
+        else:
+            self.columns = available_columns
+        
+        # Handle edge case: single row (Requirements: 2.1)
+        if len(self.data) == 1:
+            logger.debug("Single row detected in TableauChart")
         
         self._clear_canvas()
         self._calculate_column_widths()
@@ -137,7 +200,10 @@ class TableauChart(Chart):
         self.elements.append(header_text)
 
     def _animate_rows(self):
-        """Draw rows with smooth animation."""
+        """Draw rows with smooth animation.
+        
+        Requirements: 3.2, 3.6, 6.3
+        """
         def ease(t):
             return t * t * (3 - 2 * t)
         
@@ -146,6 +212,13 @@ class TableauChart(Chart):
         filtered_data = self._apply_filters_and_sort()
         
         def update_animation(frame: int, total_frames: int):
+            # Check if widget still exists before updating (Requirements: 6.3)
+            try:
+                if not self.canvas.winfo_exists():
+                    return
+            except tk.TclError:
+                return
+            
             progress = ease(frame / total_frames)
             y_start = self.padding + 60
             
@@ -153,7 +226,9 @@ class TableauChart(Chart):
             self._draw_rows(filtered_data, max_rows, y_start, row_height, progress)
             
             if frame < total_frames:
-                self.canvas.after(16, update_animation, frame + 1, total_frames)
+                # Register animation callback with resource manager (Requirements: 3.2, 3.6)
+                after_id = self.canvas.after(16, update_animation, frame + 1, total_frames)
+                self.resource_manager.register_animation(after_id)
         
         total_frames = self.animation_duration // 16
         update_animation(0, total_frames)
@@ -214,26 +289,54 @@ class TableauChart(Chart):
         return filtered_data
 
     def _add_interactive_effects(self):
-        """Add sorting and filtering interactivity."""
+        """Add sorting and filtering interactivity.
+        
+        Requirements: 3.5, 7.2, 7.3
+        """
         def on_header_click(event):
-            col = self._get_clicked_column(event)
-            if col:
-                self._update_sort_column(col)
-                self._redraw_table()
+            """Handle header click events (Requirements: 7.3)"""
+            try:
+                col = self._get_clicked_column(event)
+                if col:
+                    self._update_sort_column(col)
+                    self._redraw_table()
+            except tk.TclError as e:
+                logger.debug(f"TclError in header click: {e}")
+            except Exception as e:
+                logger.warning(f"Error in header click: {e}")
 
         def on_hover(event):
-            for item in self.canvas.find_withtag('header'):
-                if item in self.canvas.find_overlapping(event.x, event.y, event.x, event.y):
-                    self.canvas.itemconfig(item, fill=self.style.ACCENT_HOVER)
-                else:
+            """Handle hover events (Requirements: 7.2)"""
+            try:
+                for item in self.canvas.find_withtag('header'):
+                    if item in self.canvas.find_overlapping(event.x, event.y, event.x, event.y):
+                        self.canvas.itemconfig(item, fill=self.style.ACCENT_HOVER)
+                    else:
+                        col = self._get_column_from_item(item)
+                        self.canvas.itemconfig(item, fill=self.style.ACCENT if col == self.sort_column else self.style.PRIMARY)
+            except tk.TclError as e:
+                logger.debug(f"TclError in hover: {e}")
+            except Exception as e:
+                logger.warning(f"Error in hover: {e}")
+        
+        def on_leave(event):
+            """Handle leave events"""
+            try:
+                for item in self.canvas.find_withtag('header'):
                     col = self._get_column_from_item(item)
                     self.canvas.itemconfig(item, fill=self.style.ACCENT if col == self.sort_column else self.style.PRIMARY)
+            except tk.TclError:
+                pass
+            except Exception:
+                pass
         
-        self.canvas.bind('<Button-1>', on_header_click)
-        self.canvas.bind('<Motion>', on_hover)
-        self.canvas.bind('<Leave>', lambda e: [self.canvas.itemconfig(item, fill=self.style.ACCENT if col == self.sort_column else self.style.PRIMARY) 
-                                              for item in self.canvas.find_withtag('header') 
-                                              for col in [self._get_column_from_item(item)]])
+        # Bind events and register with resource manager (Requirements: 3.5)
+        click_id = self.canvas.bind('<Button-1>', on_header_click)
+        motion_id = self.canvas.bind('<Motion>', on_hover)
+        leave_id = self.canvas.bind('<Leave>', on_leave)
+        self.resource_manager.register_binding(self.canvas, '<Button-1>', click_id)
+        self.resource_manager.register_binding(self.canvas, '<Motion>', motion_id)
+        self.resource_manager.register_binding(self.canvas, '<Leave>', leave_id)
 
     def _get_clicked_column(self, event) -> Optional[str]:
         """Get the column clicked by the user."""

@@ -15,16 +15,29 @@
 # GitHub: https://github.com/ghassenTn
 
 
-from typing import List, Optional, Union, Tuple
+from typing import List, Optional, Union, Tuple, Any
 import tkinter as tk
 from tkinter import ttk
 import math
+import logging
 from .core import Chart, ChartStyle
+from .validation import DataValidator
+
+logger = logging.getLogger('ChartForgeTK')
+
 
 class PieChart(Chart):
-    def __init__(self, parent=None, width: int = 800, height: int = 600, display_mode='frame', is_3d: bool = False):
-        super().__init__(parent, width=width, height=height, display_mode=display_mode)
+    """
+    Pie chart implementation with comprehensive input validation and edge case handling.
+    
+    Requirements: 1.1, 1.2, 1.3, 1.4, 2.1, 2.5, 3.1, 3.2, 3.6, 9.1, 9.2
+    """
+    
+    def __init__(self, parent=None, width: int = 800, height: int = 600, display_mode='frame', 
+                 theme='light', is_3d: bool = False):
+        super().__init__(parent, width=width, height=height, display_mode=display_mode, theme=theme)
         self.data = []
+        self.labels = []
         self.radius = min(width, height) * 0.35  # 70% of smallest dimension
         self.center_x = width / 2
         self.center_y = height / 2
@@ -37,34 +50,121 @@ class PieChart(Chart):
         self.thickness = 30 if is_3d else 0  # Thickness for 3D effect, 0 for 2D
         self.tilt_factor = 0.5 if is_3d else 1  # Tilt factor for 3D, 1 for flat 2D
         self.original_colors = []  # Store original colors for slices
+        self._tooltip = None  # Tooltip window reference
 
-    def plot(self, data: List[float], labels: Optional[List[str]] = None):
-        """Plot the pie chart with the given data and optional labels"""
-        if not data:
-            raise ValueError("Data cannot be empty")
-        if not all(isinstance(x, (int, float)) for x in data):
-            raise TypeError("All data points must be numbers")
-        if any(x < 0 for x in data):
-            raise ValueError("Pie chart data cannot contain negative values")
-        if labels and len(labels) != len(data):
-            raise ValueError("Number of labels must match number of data points")
+    def plot(
+        self,
+        data: Any,
+        labels: Optional[Union[List[str], str]] = None,
+        value_column: Optional[str] = None,
+        label_column: Optional[str] = None
+    ):
+        """
+        Plot the pie chart with the given data and optional labels.
+        
+        Supports pandas DataFrame, Series, or list input. When a DataFrame or Series
+        is passed, the data is automatically converted to lists for plotting.
+        
+        Args:
+            data: Data to plot. Can be:
+                - List of numeric values (must be non-negative)
+                - pandas DataFrame (uses value_column or first numeric column)
+                - pandas Series (uses values with index as labels)
+            labels: Optional labels for each slice. Can be:
+                - List of strings
+                - Ignored when data is a pandas object (use label_column instead)
+            value_column: Column name for values when data is a DataFrame.
+                If not specified, uses the first numeric column.
+            label_column: Column name for labels when data is a DataFrame.
+                If not specified, uses the DataFrame index.
             
-        self.data = data
-        self.labels = labels or [f"Slice {i}" for i in range(len(data))]
-        self.total = sum(data)
-        self._add_title("3D Pie Chart" if self.is_3d else "Pie Chart")
+        Raises:
+            TypeError: If data is None or contains non-numeric values
+            ValueError: If data is empty, contains negative values, labels mismatch,
+                       or all values are zero
+            ImportError: If pandas DataFrame/Series is passed but pandas is not installed
+            
+        Requirements: 1.1, 1.2, 1.3, 1.4, 2.5, 4.4, 4.5, 9.1, 9.2
+        """
+        # Handle pandas DataFrame input (Requirements: 4.4, 4.5)
+        if DataValidator.is_pandas_dataframe(data):
+            converted_values, converted_labels = DataValidator.convert_dataframe_to_list(
+                data,
+                value_column=value_column,
+                label_column=label_column,
+                param_name="data"
+            )
+            data = converted_values
+            # Use converted labels if no explicit labels provided
+            if labels is None:
+                labels = converted_labels
+        # Handle pandas Series input (Requirements: 4.4, 4.5)
+        elif DataValidator.is_pandas_series(data):
+            converted_values, converted_labels = DataValidator.convert_series_to_list(
+                data,
+                param_name="data"
+            )
+            data = converted_values
+            # Use converted labels if no explicit labels provided
+            if labels is None:
+                labels = converted_labels
+        # When column parameters are provided with non-DataFrame data, ignore them (Requirements: 4.5)
+        # This maintains backward compatibility - no action needed, just proceed with list validation
+        
+        # Validate data using DataValidator (Requirements: 1.1, 1.2, 1.3)
+        validated_data = DataValidator.validate_numeric_list(
+            data,
+            allow_empty=False,
+            allow_negative=False,  # Pie charts don't support negative values
+            allow_nan=False,
+            allow_inf=False,
+            param_name="data"
+        )
+        
+        # Validate labels (Requirements: 1.4)
+        validated_labels = DataValidator.validate_labels(labels, len(validated_data), param_name="labels")
+        
+        # Check for all-zero data (Requirements: 2.5)
+        total = sum(validated_data)
+        if total == 0:
+            raise ValueError(
+                "[PieChart] Error: All data values are zero. "
+                "Pie chart requires at least one non-zero value to display proportions."
+            )
+        
+        # Create copies for immutability (Requirements: 9.1, 9.2)
+        self.data = validated_data.copy()
+        self.labels = validated_labels.copy()
+        self.total = total
+        
+        # Cancel pending animations before redrawing (Requirements: 3.2, 3.6)
+        self.resource_manager.cancel_animations()
+        
+        # Clean up previous tooltips (Requirements: 3.1)
+        self.resource_manager.cleanup_tooltips()
+        
         # Clear previous content
         self.canvas.delete('all')
         
         # Reset stored colors
         self.original_colors = []
         
+        # Add title
+        self._add_title("3D Pie Chart" if self.is_3d else "Pie Chart")
+        
         # Animate the pie chart drawing
         self._animate_pie()
         self._add_interactive_effects()
 
     def _animate_pie(self):
-        """Draw the pie chart with smooth animation, optionally with 3D effect"""
+        """
+        Draw the pie chart with smooth animation, optionally with 3D effect.
+        
+        Handles edge cases:
+        - Single data point (Requirements: 2.1)
+        
+        Requirements: 3.2, 3.6
+        """
         def ease(t):
             return t * t * (3 - 2 * t)  # Ease-in-out
         
@@ -73,13 +173,28 @@ class PieChart(Chart):
         self.label_items = []  # Reset label items list
         self.original_colors = []  # Reset original colors list
         
+        # Handle edge case: single data point (Requirements: 2.1)
+        is_single_point = len(self.data) == 1
+        if is_single_point:
+            logger.debug("Single data point detected, rendering full circle")
+        
         def update_animation(frame: int, total_frames: int):
+            # Check if widget still exists before updating (Requirements: 6.3)
+            try:
+                if not self.canvas.winfo_exists():
+                    return
+            except tk.TclError:
+                return
+            
             progress = ease(frame / total_frames)
             current_angle = 0
             
             # Clear previous slices and labels
             for item in self.slices + self.label_items:
-                self.canvas.delete(item)
+                try:
+                    self.canvas.delete(item)
+                except tk.TclError:
+                    pass
             self.slices.clear()
             self.slice_angles.clear()
             self.label_items.clear()
@@ -98,19 +213,22 @@ class PieChart(Chart):
                         shadow_color = self.style.create_shadow(color)
                         for depth in range(self.thickness):
                             y_offset = depth * self.tilt_factor
-                            side = self.canvas.create_arc(
-                                self.center_x - self.radius,
-                                self.center_y - self.radius + y_offset,
-                                self.center_x + self.radius,
-                                self.center_y + self.radius + y_offset,
-                                start=math.degrees(current_angle),
-                                extent=math.degrees(angle),
-                                fill=shadow_color,
-                                outline="",
-                                style=tk.PIESLICE,
-                                tags=('side', f'slice_{i}')
-                            )
-                            self.slices.append(side)
+                            try:
+                                side = self.canvas.create_arc(
+                                    self.center_x - self.radius,
+                                    self.center_y - self.radius + y_offset,
+                                    self.center_x + self.radius,
+                                    self.center_y + self.radius + y_offset,
+                                    start=math.degrees(current_angle),
+                                    extent=math.degrees(angle),
+                                    fill=shadow_color,
+                                    outline="",
+                                    style=tk.PIESLICE,
+                                    tags=('side', f'slice_{i}')
+                                )
+                                self.slices.append(side)
+                            except tk.TclError:
+                                pass
                     
                     current_angle = end_angle
             
@@ -125,20 +243,23 @@ class PieChart(Chart):
                     self.original_colors.append(color)
                 
                 # Draw the top surface (elliptical for 3D, circular for 2D)
-                slice_item = self.canvas.create_arc(
-                    self.center_x - self.radius,
-                    self.center_y - self.radius,
-                    self.center_x + self.radius,
-                    self.center_y + self.radius - (self.thickness * self.tilt_factor if self.is_3d else 0),
-                    start=math.degrees(current_angle),
-                    extent=math.degrees(angle),
-                    fill=color,
-                    outline=self.style.adjust_brightness(color, 1.1),
-                    width=1,
-                    style=tk.PIESLICE,
-                    tags=('slice', f'slice_{i}')
-                )
-                self.slices.append(slice_item)
+                try:
+                    slice_item = self.canvas.create_arc(
+                        self.center_x - self.radius,
+                        self.center_y - self.radius,
+                        self.center_x + self.radius,
+                        self.center_y + self.radius - (self.thickness * self.tilt_factor if self.is_3d else 0),
+                        start=math.degrees(current_angle),
+                        extent=math.degrees(angle),
+                        fill=color,
+                        outline=self.style.adjust_brightness(color, 1.1),
+                        width=1,
+                        style=tk.PIESLICE,
+                        tags=('slice', f'slice_{i}')
+                    )
+                    self.slices.append(slice_item)
+                except tk.TclError:
+                    pass
                 
                 # Add label when slice is fully drawn
                 if progress == 1:
@@ -149,30 +270,50 @@ class PieChart(Chart):
                     percentage = (value / self.total) * 100
                     label_text = f"{self.labels[i]}\n{percentage:.1f}%"
                     
-                    label = self.canvas.create_text(
-                        lx, ly,
-                        text=label_text,
-                        font=self.style.VALUE_FONT,
-                        fill=self.style.TEXT,
-                        justify='center',
-                        tags=('label', f'slice_{i}')
-                    )
-                    self.label_items.append(label)
+                    try:
+                        label = self.canvas.create_text(
+                            lx, ly,
+                            text=label_text,
+                            font=self.style.VALUE_FONT,
+                            fill=self.style.TEXT,
+                            justify='center',
+                            tags=('label', f'slice_{i}')
+                        )
+                        self.label_items.append(label)
+                    except tk.TclError:
+                        pass
                 
                 current_angle = end_angle
             
             if frame < total_frames:
-                self.canvas.after(16, update_animation, frame + 1, total_frames)
+                # Register animation callback with resource manager (Requirements: 3.2, 3.6)
+                try:
+                    after_id = self.canvas.after(16, update_animation, frame + 1, total_frames)
+                    self.resource_manager.register_animation(after_id)
+                except tk.TclError:
+                    pass
         
         total_frames = self.animation_duration // 16  # ~60 FPS
         update_animation(0, total_frames)
 
     def _add_interactive_effects(self):
-        """Add hover effects and tooltips"""
+        """
+        Add hover effects and tooltips with proper resource management.
+        
+        Requirements: 3.1, 3.5, 7.1, 7.2, 7.6
+        """
+        # Create tooltip window
         tooltip = tk.Toplevel()
         tooltip.withdraw()
         tooltip.overrideredirect(True)
-        tooltip.attributes('-topmost', True)
+        try:
+            tooltip.attributes('-topmost', True)
+        except tk.TclError:
+            pass  # Some platforms may not support this
+        
+        # Register tooltip with resource manager (Requirements: 3.1, 7.6)
+        self.resource_manager.register_tooltip(tooltip)
+        self._tooltip = tooltip
         
         tooltip_frame = ttk.Frame(tooltip, style='Tooltip.TFrame')
         tooltip_frame.pack(fill='both', expand=True)
@@ -194,7 +335,13 @@ class PieChart(Chart):
         current_highlight = None
         
         def on_motion(event):
+            """Handle mouse motion events (Requirements: 7.2)"""
             nonlocal current_highlight
+            
+            # Safety check - ensure data exists
+            if not self.data:
+                return
+            
             x, y = event.x, event.y
             
             # Calculate angle from center
@@ -209,45 +356,60 @@ class PieChart(Chart):
                 for i, value in enumerate(self.data):
                     slice_angle = (value / self.total) * 2 * math.pi
                     if current_angle <= angle < current_angle + slice_angle:
-                        if current_highlight:
-                            self.canvas.delete(current_highlight)
-                        
-                        highlight = self.canvas.create_arc(
-                            self.center_x - self.radius * 1.1,
-                            self.center_y - self.radius * 1.1,
-                            self.center_x + self.radius * 1.1,
-                            self.center_y + self.radius * 1.1 - (self.thickness * self.tilt_factor if self.is_3d else 0),
-                            start=math.degrees(current_angle),
-                            extent=math.degrees(slice_angle),
-                            outline=self.style.ACCENT,
-                            width=2,
-                            style=tk.PIESLICE,
-                            tags=('highlight',)
-                        )
-                        current_highlight = highlight
-                        
-                        percentage = (value / self.total) * 100
-                        tooltip_text = f"{self.labels[i]}\nValue: {value:,.2f}\n{percentage:.1f}%"
-                        label.config(text=tooltip_text)
-                        tooltip.wm_geometry(f"+{event.x_root+10}+{event.y_root-40}")
-                        tooltip.deiconify()
-                        tooltip.lift()
+                        try:
+                            if current_highlight:
+                                self.canvas.delete(current_highlight)
+                            
+                            highlight = self.canvas.create_arc(
+                                self.center_x - self.radius * 1.1,
+                                self.center_y - self.radius * 1.1,
+                                self.center_x + self.radius * 1.1,
+                                self.center_y + self.radius * 1.1 - (self.thickness * self.tilt_factor if self.is_3d else 0),
+                                start=math.degrees(current_angle),
+                                extent=math.degrees(slice_angle),
+                                outline=self.style.ACCENT,
+                                width=2,
+                                style=tk.PIESLICE,
+                                tags=('highlight',)
+                            )
+                            current_highlight = highlight
+                            
+                            percentage = (value / self.total) * 100
+                            tooltip_text = f"{self.labels[i]}\nValue: {value:,.2f}\n{percentage:.1f}%"
+                            label.config(text=tooltip_text)
+                            tooltip.wm_geometry(f"+{event.x_root+10}+{event.y_root-40}")
+                            tooltip.deiconify()
+                            tooltip.lift()
+                        except tk.TclError:
+                            pass  # Widget may have been destroyed
                         break
                     current_angle += slice_angle
             else:
+                try:
+                    if current_highlight:
+                        self.canvas.delete(current_highlight)
+                        current_highlight = None
+                    tooltip.withdraw()
+                except tk.TclError:
+                    pass
+        
+        def on_leave(event):
+            """Handle mouse leave events"""
+            nonlocal current_highlight
+            try:
                 if current_highlight:
                     self.canvas.delete(current_highlight)
                     current_highlight = None
                 tooltip.withdraw()
-        
-        def on_leave(event):
-            nonlocal current_highlight
-            if current_highlight:
-                self.canvas.delete(current_highlight)
-                current_highlight = None
-            tooltip.withdraw()
+            except tk.TclError:
+                pass
         
         def on_click(event):
+            """Handle mouse click events (Requirements: 7.3)"""
+            # Safety check - ensure data exists
+            if not self.data:
+                return
+            
             x, y = event.x, event.y
             dx = x - self.center_x
             dy = -(y - self.center_y)  # Invert y for canvas coordinates
@@ -260,16 +422,31 @@ class PieChart(Chart):
                 for i, value in enumerate(self.data):
                     slice_angle = (value / self.total) * 2 * math.pi
                     if current_angle <= angle < current_angle + slice_angle:
-                        self._enlarge_slice(i)
+                        try:
+                            self._enlarge_slice(i)
+                        except Exception as e:
+                            logger.warning(f"Error enlarging slice: {e}")
                         break
                     current_angle += slice_angle
         
-        self.canvas.bind('<Motion>', on_motion)
-        self.canvas.bind('<Leave>', on_leave)
-        self.canvas.bind('<Button-1>', on_click)
+        # Bind events and register with resource manager (Requirements: 3.5)
+        motion_id = self.canvas.bind('<Motion>', on_motion)
+        leave_id = self.canvas.bind('<Leave>', on_leave)
+        click_id = self.canvas.bind('<Button-1>', on_click)
+        self.resource_manager.register_binding(self.canvas, '<Motion>', motion_id)
+        self.resource_manager.register_binding(self.canvas, '<Leave>', leave_id)
+        self.resource_manager.register_binding(self.canvas, '<Button-1>', click_id)
 
     def _enlarge_slice(self, slice_index: int):
-        """Enlarge the selected slice with animation, optionally with 3D effect"""
+        """
+        Enlarge the selected slice with animation, optionally with 3D effect.
+        
+        Requirements: 3.2, 3.6
+        """
+        # Safety check - ensure slice_angles is populated
+        if not self.slice_angles or slice_index >= len(self.slice_angles):
+            return
+        
         if self.selected_slice is not None:
             self._reset_slice(self.selected_slice)
         
@@ -278,9 +455,12 @@ class PieChart(Chart):
         slice_angle = end_angle - current_angle
         
         # Change the original slice color to white
-        for item in self.canvas.find_withtag(f'slice_{slice_index}'):
-            if 'slice' in self.canvas.gettags(item) and 'side' not in self.canvas.gettags(item):
-                self.canvas.itemconfig(item, fill='white')
+        try:
+            for item in self.canvas.find_withtag(f'slice_{slice_index}'):
+                if 'slice' in self.canvas.gettags(item) and 'side' not in self.canvas.gettags(item):
+                    self.canvas.itemconfig(item, fill='white')
+        except tk.TclError:
+            pass
         
         # Animation parameters
         explosion_offset = 20  # Maximum explosion distance
@@ -288,95 +468,130 @@ class PieChart(Chart):
         delay = 16  # Delay between frames (ms)
         
         def animate_explosion(frame):
+            # Check if widget still exists before updating (Requirements: 6.3)
+            try:
+                if not self.canvas.winfo_exists():
+                    return
+            except tk.TclError:
+                return
+            
             progress = frame / frames
             offset = explosion_offset * progress
             offset_x = offset * math.cos(current_angle + slice_angle / 2)
             offset_y = -offset * math.sin(current_angle + slice_angle / 2)
+            
+            # Safety check for original_colors
+            if slice_index >= len(self.original_colors):
+                return
+            
             color = self.original_colors[slice_index]
             shadow_color = self.style.create_shadow(color)
             
-            # Clear previous enlarged slice
-            self.canvas.delete('enlarged_slice')
-            self.canvas.delete('enlarged_side')
-            
-            # Draw the sides of the enlarged slice (only if 3D)
-            if self.is_3d:
-                for depth in range(self.thickness):
-                    y_offset = depth * self.tilt_factor
-                    enlarged_side = self.canvas.create_arc(
-                        self.center_x - self.radius * 1.2 + offset_x,
-                        self.center_y - self.radius * 1.2 + offset_y + y_offset,
-                        self.center_x + self.radius * 1.2 + offset_x,
-                        self.center_y + self.radius * 1.2 + offset_y + y_offset,
-                        start=math.degrees(current_angle),
-                        extent=math.degrees(slice_angle),
-                        fill=shadow_color,
-                        outline="",
-                        style=tk.PIESLICE,
-                        tags=('enlarged_side',)
-                    )
-            
-            # Draw the top of the enlarged slice (elliptical for 3D, circular for 2D)
-            enlarged_slice = self.canvas.create_arc(
-                self.center_x - self.radius * 1.2 + offset_x,
-                self.center_y - self.radius * 1.2 + offset_y,
-                self.center_x + self.radius * 1.2 + offset_x,
-                self.center_y + self.radius * 1.2 + offset_y - (self.thickness * self.tilt_factor if self.is_3d else 0),
-                start=math.degrees(current_angle),
-                extent=math.degrees(slice_angle),
-                fill=color,
-                outline=self.style.adjust_brightness(color, 1.1),
-                width=1,
-                style=tk.PIESLICE,
-                tags=('enlarged_slice',)
-            )
-            
-            # Move the label outward
-            label_radius = self.radius * 1.4
-            lx = self.center_x + label_radius * math.cos(current_angle + slice_angle / 2) + offset_x
-            ly = self.center_y - label_radius * math.sin(current_angle + slice_angle / 2) + offset_y - (self.thickness * self.tilt_factor / 2 if self.is_3d else 0)
-            self.canvas.coords(self.label_items[slice_index], lx, ly)
+            try:
+                # Clear previous enlarged slice
+                self.canvas.delete('enlarged_slice')
+                self.canvas.delete('enlarged_side')
+                
+                # Draw the sides of the enlarged slice (only if 3D)
+                if self.is_3d:
+                    for depth in range(self.thickness):
+                        y_offset = depth * self.tilt_factor
+                        enlarged_side = self.canvas.create_arc(
+                            self.center_x - self.radius * 1.2 + offset_x,
+                            self.center_y - self.radius * 1.2 + offset_y + y_offset,
+                            self.center_x + self.radius * 1.2 + offset_x,
+                            self.center_y + self.radius * 1.2 + offset_y + y_offset,
+                            start=math.degrees(current_angle),
+                            extent=math.degrees(slice_angle),
+                            fill=shadow_color,
+                            outline="",
+                            style=tk.PIESLICE,
+                            tags=('enlarged_side',)
+                        )
+                
+                # Draw the top of the enlarged slice (elliptical for 3D, circular for 2D)
+                enlarged_slice = self.canvas.create_arc(
+                    self.center_x - self.radius * 1.2 + offset_x,
+                    self.center_y - self.radius * 1.2 + offset_y,
+                    self.center_x + self.radius * 1.2 + offset_x,
+                    self.center_y + self.radius * 1.2 + offset_y - (self.thickness * self.tilt_factor if self.is_3d else 0),
+                    start=math.degrees(current_angle),
+                    extent=math.degrees(slice_angle),
+                    fill=color,
+                    outline=self.style.adjust_brightness(color, 1.1),
+                    width=1,
+                    style=tk.PIESLICE,
+                    tags=('enlarged_slice',)
+                )
+                
+                # Move the label outward (with safety check)
+                if slice_index < len(self.label_items):
+                    label_radius = self.radius * 1.4
+                    lx = self.center_x + label_radius * math.cos(current_angle + slice_angle / 2) + offset_x
+                    ly = self.center_y - label_radius * math.sin(current_angle + slice_angle / 2) + offset_y - (self.thickness * self.tilt_factor / 2 if self.is_3d else 0)
+                    self.canvas.coords(self.label_items[slice_index], lx, ly)
+            except tk.TclError:
+                pass  # Widget may have been destroyed
             
             if frame < frames:
-                self.canvas.after(delay, animate_explosion, frame + 1)
+                # Register animation callback with resource manager (Requirements: 3.2, 3.6)
+                try:
+                    after_id = self.canvas.after(delay, animate_explosion, frame + 1)
+                    self.resource_manager.register_animation(after_id)
+                except tk.TclError:
+                    pass
         
         animate_explosion(0)
 
     def _reset_slice(self, slice_index: int):
-        """Reset the slice and its label to their original positions and restore original color"""
-        self.canvas.delete('enlarged_slice')
-        self.canvas.delete('enlarged_side')
+        """Reset the slice and its label to their original positions and restore original color."""
+        # Safety checks
+        if not self.slice_angles or slice_index >= len(self.slice_angles):
+            return
+        if not self.original_colors or slice_index >= len(self.original_colors):
+            return
+        
+        try:
+            self.canvas.delete('enlarged_slice')
+            self.canvas.delete('enlarged_side')
+        except tk.TclError:
+            pass
+        
         self.selected_slice = None
         current_angle, end_angle = self.slice_angles[slice_index]
         slice_angle = end_angle - current_angle
         
         # Restore the original color of the slice
         color = self.original_colors[slice_index]
-        for item in self.canvas.find_withtag(f'slice_{slice_index}'):
-            if 'slice' in self.canvas.gettags(item) and 'side' not in self.canvas.gettags(item):
-                self.canvas.itemconfig(item, fill=color)
-        
-        # Redraw the slice at its original size (elliptical for 3D, circular for 2D)
-        self.canvas.create_arc(
-            self.center_x - self.radius,
-            self.center_y - self.radius,
-            self.center_x + self.radius,
-            self.center_y + self.radius - (self.thickness * self.tilt_factor if self.is_3d else 0),
-            start=math.degrees(current_angle),
-            extent=math.degrees(slice_angle),
-            fill=color,
-            outline=self.style.adjust_brightness(color, 1.1),
-            width=1,
-            style=tk.PIESLICE,
-            tags=('slice', f'slice_{slice_index}')
-        )
-        
-        # Move the label back to its original position
-        mid_angle = current_angle + slice_angle / 2
-        label_radius = self.radius * 1.2
-        lx = self.center_x + label_radius * math.cos(mid_angle)
-        ly = self.center_y - label_radius * math.sin(mid_angle) - (self.thickness * self.tilt_factor / 2 if self.is_3d else 0)
-        self.canvas.coords(self.label_items[slice_index], lx, ly)
+        try:
+            for item in self.canvas.find_withtag(f'slice_{slice_index}'):
+                if 'slice' in self.canvas.gettags(item) and 'side' not in self.canvas.gettags(item):
+                    self.canvas.itemconfig(item, fill=color)
+            
+            # Redraw the slice at its original size (elliptical for 3D, circular for 2D)
+            self.canvas.create_arc(
+                self.center_x - self.radius,
+                self.center_y - self.radius,
+                self.center_x + self.radius,
+                self.center_y + self.radius - (self.thickness * self.tilt_factor if self.is_3d else 0),
+                start=math.degrees(current_angle),
+                extent=math.degrees(slice_angle),
+                fill=color,
+                outline=self.style.adjust_brightness(color, 1.1),
+                width=1,
+                style=tk.PIESLICE,
+                tags=('slice', f'slice_{slice_index}')
+            )
+            
+            # Move the label back to its original position (with safety check)
+            if slice_index < len(self.label_items):
+                mid_angle = current_angle + slice_angle / 2
+                label_radius = self.radius * 1.2
+                lx = self.center_x + label_radius * math.cos(mid_angle)
+                ly = self.center_y - label_radius * math.sin(mid_angle) - (self.thickness * self.tilt_factor / 2 if self.is_3d else 0)
+                self.canvas.coords(self.label_items[slice_index], lx, ly)
+        except tk.TclError:
+            pass  # Widget may have been destroyed
 
     def _add_title(self, title: str):
         """Add a title to the pie chart"""

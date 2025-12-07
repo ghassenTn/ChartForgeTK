@@ -19,9 +19,21 @@ from typing import List, Tuple
 import tkinter as tk
 from tkinter import ttk
 import math
+import logging
 from .core import Chart, ChartStyle
+from .validation import DataValidator
+
+logger = logging.getLogger('ChartForgeTK')
+
+
 class CandlestickChart(Chart):
-    def __init__(self, parent=None, show_labels = True, width: int = 800, height: int = 600, display_mode='frame', theme='light'):
+    """
+    Candlestick chart implementation with comprehensive input validation and edge case handling.
+    
+    Requirements: 1.1, 1.2, 1.3, 2.1, 2.2, 3.1, 3.2, 3.6, 9.1, 9.2
+    """
+    
+    def __init__(self, parent=None, show_labels=True, width: int = 800, height: int = 600, display_mode='frame', theme='light'):
         super().__init__(parent, width=width, height=height, display_mode=display_mode, theme=theme)
         self.show_labels = show_labels
         self.data = []  # List of (index, open, high, low, close) tuples
@@ -29,23 +41,80 @@ class CandlestickChart(Chart):
         self.wick_width = 2  # Thicker wicks for visibility
         self.animation_duration = 600  # Smoother animation
         self.elements = []
+        self._tooltip = None  # Tooltip window reference
         
     def plot(self, data: List[Tuple[float, float, float, float, float]]):
-        """Plot an improved candlestick chart with (index, open, high, low, close) data"""
-        if not data:
-            raise ValueError("Data cannot be empty")
-        if not all(isinstance(d, tuple) and len(d) == 5 and 
-                  all(isinstance(v, (int, float)) for v in d) for d in data):
-            raise TypeError("Data must be a list of (index, open, high, low, close) number tuples")
+        """Plot an improved candlestick chart with (index, open, high, low, close) data
+        
+        Args:
+            data: List of (index, open, high, low, close) tuples
             
-        self.data = sorted(data, key=lambda x: x[0])  # Sort by index
+        Raises:
+            ValueError: If data is empty or contains invalid OHLC values
+            TypeError: If data is not a list of (index, open, high, low, close) number tuples
+            
+        Requirements: 1.1, 1.2, 1.3, 2.1, 2.2, 3.1, 3.2, 3.6, 9.1, 9.2, 9.3, 9.4
+        """
+        # Validate data using DataValidator (Requirements: 1.1, 1.2, 1.3)
+        validated_data = DataValidator.validate_tuple_list(
+            data,
+            expected_length=5,
+            allow_empty=False,
+            param_name="data"
+        )
+        
+        # Additional validation: high >= low for each candle
+        for i, (index, open_price, high, low, close_price) in enumerate(validated_data):
+            if high < low:
+                raise ValueError(
+                    f"[ChartForgeTK] Error: data[{i}] has high ({high}) < low ({low}). "
+                    f"High must be greater than or equal to low."
+                )
+            if high < open_price or high < close_price:
+                raise ValueError(
+                    f"[ChartForgeTK] Error: data[{i}] has high ({high}) less than open ({open_price}) or close ({close_price}). "
+                    f"High must be the maximum value."
+                )
+            if low > open_price or low > close_price:
+                raise ValueError(
+                    f"[ChartForgeTK] Error: data[{i}] has low ({low}) greater than open ({open_price}) or close ({close_price}). "
+                    f"Low must be the minimum value."
+                )
+        
+        # Cancel pending animations before redrawing (Requirements: 3.2, 3.6)
+        self.resource_manager.cancel_animations()
+        
+        # Clean up previous tooltips (Requirements: 3.1)
+        self.resource_manager.cleanup_tooltips()
+        
+        # Create copy for immutability and sort by index (Requirements: 9.1, 9.2, 9.4)
+        self.data = sorted([tuple(d) for d in validated_data], key=lambda x: x[0])
+        
+        # Handle edge case: single data point (Requirements: 2.1)
+        if len(self.data) == 1:
+            logger.debug("Single candlestick detected, adjusting layout")
         
         # Calculate ranges
         indices, opens, highs, lows, closes = zip(*self.data)
         self.x_min, self.x_max = min(indices), max(indices)
         self.y_min, self.y_max = min(lows), max(highs)
-        x_padding = (self.x_max - self.x_min) * 0.1 or 1
-        y_padding = (self.y_max - self.y_min) * 0.1 or 1
+        
+        # Handle edge case: identical x values (Requirements: 2.2)
+        x_range = self.x_max - self.x_min
+        if x_range == 0:
+            x_padding = abs(self.x_max) * 0.1 if self.x_max != 0 else 1
+            logger.debug(f"All x values identical ({self.x_max}), using default padding")
+        else:
+            x_padding = x_range * 0.1
+        
+        # Handle edge case: identical y values (Requirements: 2.2)
+        y_range = self.y_max - self.y_min
+        if y_range == 0:
+            y_padding = abs(self.y_max) * 0.1 if self.y_max != 0 else 1
+            logger.debug(f"All y values identical ({self.y_max}), using default padding")
+        else:
+            y_padding = y_range * 0.1
+        
         self.x_min -= x_padding
         self.x_max += x_padding
         self.y_min -= y_padding
@@ -63,7 +132,10 @@ class CandlestickChart(Chart):
         self._add_interactive_effects()
 
     def _animate_candles(self):
-        """Draw candlesticks with improved animation from midpoint"""
+        """Draw candlesticks with improved animation from midpoint.
+        
+        Requirements: 3.2, 3.6, 6.3
+        """
         def ease(t):
             return t * t * (3 - 2 * t)
         
@@ -71,10 +143,20 @@ class CandlestickChart(Chart):
         candle_width = candle_spacing * self.candle_width_factor
         
         def update_animation(frame: int, total_frames: int):
+            # Check if widget still exists before updating (Requirements: 6.3)
+            try:
+                if not self.canvas.winfo_exists():
+                    return
+            except tk.TclError:
+                return
+            
             progress = ease(frame / total_frames)
             
             for item in self.elements:
-                self.canvas.delete(item)
+                try:
+                    self.canvas.delete(item)
+                except tk.TclError:
+                    pass
             self.elements.clear()
             
             for i, (index, open_price, high, low, close_price) in enumerate(self.data):
@@ -153,17 +235,30 @@ class CandlestickChart(Chart):
                     self.elements.append(low_label)
             
             if frame < total_frames:
-                self.canvas.after(20, update_animation, frame + 1, total_frames)
+                # Register animation callback with resource manager (Requirements: 3.2, 3.6)
+                after_id = self.canvas.after(20, update_animation, frame + 1, total_frames)
+                self.resource_manager.register_animation(after_id)
         
         total_frames = self.animation_duration // 20  # ~50 FPS
         update_animation(0, total_frames)
 
     def _add_interactive_effects(self):
-        """Add enhanced hover effects and tooltips"""
+        """Add enhanced hover effects and tooltips with proper resource management.
+        
+        Requirements: 3.1, 3.5, 7.1, 7.2, 7.6
+        """
+        # Create tooltip window
         tooltip = tk.Toplevel()
         tooltip.withdraw()
         tooltip.overrideredirect(True)
-        tooltip.attributes('-topmost', True)
+        try:
+            tooltip.attributes('-topmost', True)
+        except tk.TclError:
+            pass  # Some platforms may not support this
+        
+        # Register tooltip with resource manager (Requirements: 3.1, 7.6)
+        self.resource_manager.register_tooltip(tooltip)
+        self._tooltip = tooltip
         
         tooltip_frame = ttk.Frame(tooltip, style='Tooltip.TFrame')
         tooltip_frame.pack(fill='both', expand=True)
@@ -178,7 +273,13 @@ class CandlestickChart(Chart):
         current_highlight = None
         
         def on_motion(event):
+            """Handle mouse motion events (Requirements: 7.2)"""
             nonlocal current_highlight
+            
+            # Safety check - ensure data exists
+            if not self.data:
+                return
+            
             x, y = event.x, event.y
             
             if self.padding <= x <= self.width - self.padding and self.padding <= y <= self.height - self.padding:
@@ -191,43 +292,70 @@ class CandlestickChart(Chart):
                     px = self._data_to_pixel_x(index, self.x_min, self.x_max)
                     y_high = self._data_to_pixel_y(high, self.y_min, self.y_max)
                     y_low = self._data_to_pixel_y(low, self.y_min, self.y_max)
-                    y_open = self._data_to_pixel_y(open_price, self.y_min, self.y_max)
-                    y_close = self._data_to_pixel_y(close_price, self.y_min, self.y_max)
-                    y_top = min(y_open, y_close)
-                    y_bottom = max(y_open, y_close)
                     
                     if current_highlight:
-                        self.canvas.delete(current_highlight)
+                        try:
+                            self.canvas.delete(current_highlight)
+                        except tk.TclError:
+                            pass
                     
                     # Highlight entire candlestick
-                    highlight = self.canvas.create_rectangle(
-                        px - candle_width/2 - 3, y_high - 3,
-                        px + candle_width/2 + 3, y_low + 3,
-                        outline=self.style.ACCENT,
-                        width=2,
-                        dash=(4, 2),  # Dashed outline for subtlety
-                        tags=('highlight',)
-                    )
-                    current_highlight = highlight
+                    try:
+                        highlight = self.canvas.create_rectangle(
+                            px - candle_width/2 - 3, y_high - 3,
+                            px + candle_width/2 + 3, y_low + 3,
+                            outline=self.style.ACCENT,
+                            width=2,
+                            dash=(4, 2),  # Dashed outline for subtlety
+                            tags=('highlight',)
+                        )
+                        current_highlight = highlight
+                    except tk.TclError:
+                        current_highlight = None
                     
-                    # Detailed tooltip
+                    # Detailed tooltip - handle division by zero
                     change = close_price - open_price
-                    label.config(text=f"Index: {index:.1f}\nOpen: {open_price:.2f}\nHigh: {high:.2f}\nLow: {low:.2f}\nClose: {close_price:.2f}\nChange: {change:.2f} ({(change/open_price*100):.1f}%)")
-                    tooltip.wm_geometry(f"+{event.x_root+15}+{event.y_root-50}")
-                    tooltip.deiconify()
-                    tooltip.lift()
+                    if open_price != 0:
+                        pct_change = (change / open_price * 100)
+                        tooltip_text = f"Index: {index:.1f}\nOpen: {open_price:.2f}\nHigh: {high:.2f}\nLow: {low:.2f}\nClose: {close_price:.2f}\nChange: {change:.2f} ({pct_change:.1f}%)"
+                    else:
+                        tooltip_text = f"Index: {index:.1f}\nOpen: {open_price:.2f}\nHigh: {high:.2f}\nLow: {low:.2f}\nClose: {close_price:.2f}\nChange: {change:.2f}"
+                    
+                    try:
+                        label.config(text=tooltip_text)
+                        tooltip.wm_geometry(f"+{event.x_root+15}+{event.y_root-50}")
+                        tooltip.deiconify()
+                        tooltip.lift()
+                    except tk.TclError:
+                        pass  # Tooltip may have been destroyed
                 else:
                     if current_highlight:
-                        self.canvas.delete(current_highlight)
+                        try:
+                            self.canvas.delete(current_highlight)
+                        except tk.TclError:
+                            pass
                         current_highlight = None
-                    tooltip.withdraw()
+                    try:
+                        tooltip.withdraw()
+                    except tk.TclError:
+                        pass
         
         def on_leave(event):
+            """Handle mouse leave events"""
             nonlocal current_highlight
             if current_highlight:
-                self.canvas.delete(current_highlight)
+                try:
+                    self.canvas.delete(current_highlight)
+                except tk.TclError:
+                    pass
                 current_highlight = None
-            tooltip.withdraw()
+            try:
+                tooltip.withdraw()
+            except tk.TclError:
+                pass
         
-        self.canvas.bind('<Motion>', on_motion)
-        self.canvas.bind('<Leave>', on_leave)
+        # Bind events and register with resource manager (Requirements: 3.5)
+        motion_id = self.canvas.bind('<Motion>', on_motion)
+        leave_id = self.canvas.bind('<Leave>', on_leave)
+        self.resource_manager.register_binding(self.canvas, '<Motion>', motion_id)
+        self.resource_manager.register_binding(self.canvas, '<Leave>', leave_id)

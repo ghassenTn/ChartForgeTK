@@ -20,7 +20,7 @@ wheels/
 *.egg-info/
 .installed.cfg
 *.egg
-
+.kiro/
 # IDE specific files
 .idea/
 .vscode/

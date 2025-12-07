@@ -18,9 +18,20 @@
 from typing import List, Tuple, Optional
 import tkinter as tk
 from tkinter import ttk
+import logging
 from .core import Chart, ChartStyle
+from .validation import DataValidator
+
+logger = logging.getLogger('ChartForgeTK')
+
 
 class GanttChart(Chart):
+    """
+    Gantt chart implementation with comprehensive input validation and edge case handling.
+    
+    Requirements: 1.1, 1.2, 1.3, 2.1, 3.1, 3.2, 3.6, 9.1, 9.2
+    """
+    
     def __init__(self, parent=None, width: int = 400, height: int = 400, 
                  display_mode='frame', theme='light', max_bar_height=30, min_bar_height=15):
         super().__init__(parent, width=width, height=height, display_mode=display_mode, theme=theme)
@@ -37,6 +48,7 @@ class GanttChart(Chart):
         self.bar_spacing = 5
         self.current_scale = 1.0
         self.v_offset = 0
+        self.x_offset = 0  # Initialize x_offset for milestones
         
         # Scrollable canvas setup
         self.container = ttk.Frame(self.parent)
@@ -60,11 +72,131 @@ class GanttChart(Chart):
     def plot(self, data: List[Tuple[str, float, float]], 
             dependencies: Optional[List[Tuple[int, int]]] = None,
             milestones: Optional[List[Tuple[str, float]]] = None):
-        """Plot the Gantt chart with tasks, dependencies, and milestones."""
-        self.data = data
-        self.dependencies = dependencies or []
-        self.milestones = milestones or []
-        self.max_days = max((start + duration for _, start, duration in data), default=0)
+        """Plot the Gantt chart with tasks, dependencies, and milestones.
+        
+        Args:
+            data: List of (task_name, start, duration) tuples
+            dependencies: Optional list of (source_idx, target_idx) tuples
+            milestones: Optional list of (name, day) tuples
+            
+        Raises:
+            TypeError: If data is None or contains invalid types
+            ValueError: If data is empty or contains invalid values
+            
+        Requirements: 1.1, 1.2, 1.3, 2.1, 3.1, 3.2, 3.6, 9.1, 9.2, 9.3, 9.4
+        """
+        # Validate data is not None (Requirements: 1.1)
+        if data is None:
+            raise TypeError(
+                "[ChartForgeTK] Error: data cannot be None. "
+                "Please provide a list of (task_name, start, duration) tuples."
+            )
+        
+        # Validate data is a list (Requirements: 1.3)
+        if not isinstance(data, (list, tuple)):
+            raise TypeError(
+                f"[ChartForgeTK] Error: data must be a list, "
+                f"got {type(data).__name__}."
+            )
+        
+        # Validate data is not empty (Requirements: 1.2)
+        if not data:
+            raise ValueError(
+                "[ChartForgeTK] Error: data cannot be empty. "
+                "Please provide at least one task."
+            )
+        
+        # Validate each task tuple
+        validated_data = []
+        for i, task in enumerate(data):
+            if not isinstance(task, (tuple, list)):
+                raise TypeError(
+                    f"[ChartForgeTK] Error: data[{i}] must be a tuple, "
+                    f"got {type(task).__name__}."
+                )
+            if len(task) != 3:
+                raise ValueError(
+                    f"[ChartForgeTK] Error: data[{i}] must have 3 elements "
+                    f"(task_name, start, duration), got {len(task)}."
+                )
+            task_name, start, duration = task
+            
+            # Validate start and duration are numeric
+            if not isinstance(start, (int, float)):
+                raise TypeError(
+                    f"[ChartForgeTK] Error: data[{i}] start must be a number, "
+                    f"got {type(start).__name__}."
+                )
+            if not isinstance(duration, (int, float)):
+                raise TypeError(
+                    f"[ChartForgeTK] Error: data[{i}] duration must be a number, "
+                    f"got {type(duration).__name__}."
+                )
+            
+            # Validate duration is non-negative
+            if duration < 0:
+                raise ValueError(
+                    f"[ChartForgeTK] Error: data[{i}] duration ({duration}) cannot be negative."
+                )
+            
+            validated_data.append((str(task_name), float(start), float(duration)))
+        
+        # Cancel pending animations before redrawing (Requirements: 3.2, 3.6)
+        self.resource_manager.cancel_animations()
+        
+        # Clean up previous tooltips (Requirements: 3.1)
+        self.resource_manager.cleanup_tooltips()
+        
+        # Create copies for immutability (Requirements: 9.1, 9.2)
+        self.data = validated_data
+        
+        # Validate and copy dependencies
+        if dependencies is not None:
+            validated_deps = []
+            for i, dep in enumerate(dependencies):
+                if not isinstance(dep, (tuple, list)) or len(dep) != 2:
+                    raise ValueError(
+                        f"[ChartForgeTK] Error: dependencies[{i}] must be a (source, target) tuple."
+                    )
+                src, tgt = dep
+                if not isinstance(src, int) or not isinstance(tgt, int):
+                    raise TypeError(
+                        f"[ChartForgeTK] Error: dependencies[{i}] indices must be integers."
+                    )
+                if src < 0 or src >= len(self.data) or tgt < 0 or tgt >= len(self.data):
+                    raise ValueError(
+                        f"[ChartForgeTK] Error: dependencies[{i}] indices ({src}, {tgt}) out of range."
+                    )
+                validated_deps.append((src, tgt))
+            self.dependencies = validated_deps
+        else:
+            self.dependencies = []
+        
+        # Validate and copy milestones
+        if milestones is not None:
+            validated_milestones = []
+            for i, ms in enumerate(milestones):
+                if not isinstance(ms, (tuple, list)) or len(ms) != 2:
+                    raise ValueError(
+                        f"[ChartForgeTK] Error: milestones[{i}] must be a (name, day) tuple."
+                    )
+                name, day = ms
+                if not isinstance(day, (int, float)):
+                    raise TypeError(
+                        f"[ChartForgeTK] Error: milestones[{i}] day must be a number."
+                    )
+                validated_milestones.append((str(name), float(day)))
+            self.milestones = validated_milestones
+        else:
+            self.milestones = []
+        
+        # Handle edge case: single task (Requirements: 2.1)
+        if len(self.data) == 1:
+            logger.debug("Single task detected in Gantt chart")
+        
+        self.max_days = max((start + duration for _, start, duration in self.data), default=1)
+        if self.max_days == 0:
+            self.max_days = 1  # Prevent division by zero
         
         # Calculate dynamic bar height
         self._calculate_dynamic_layout()
@@ -205,17 +337,31 @@ class GanttChart(Chart):
         self.canvas.scan_dragto(event.x, event.y, gain=1)
 
     def _on_hover(self, event):
-        """Handle hover events for task highlighting and tooltips."""
-        x, y = self.canvas.canvasx(event.x), self.canvas.canvasy(event.y)
-        task_id = self.canvas.find_overlapping(x, y, x, y)
+        """Handle hover events for task highlighting and tooltips.
         
-        if task_id and 'task' in self.canvas.gettags(task_id[0]):
-            idx = int(self.canvas.gettags(task_id[0])[1].split('_')[1])
-            self._highlight_task(idx)
-            self._show_tooltip(x, y, idx)
-        else:
-            self._clear_highlights()
-            self._hide_tooltip()
+        Requirements: 7.2
+        """
+        try:
+            x, y = self.canvas.canvasx(event.x), self.canvas.canvasy(event.y)
+            task_id = self.canvas.find_overlapping(x, y, x, y)
+            
+            if task_id and 'task' in self.canvas.gettags(task_id[0]):
+                tags = self.canvas.gettags(task_id[0])
+                # Find the task index tag
+                for tag in tags:
+                    if tag.startswith('task_'):
+                        idx = int(tag.split('_')[1])
+                        if 0 <= idx < len(self.data):
+                            self._highlight_task(idx)
+                            self._show_tooltip(x, y, idx)
+                        break
+            else:
+                self._clear_highlights()
+                self._hide_tooltip()
+        except tk.TclError as e:
+            logger.debug(f"TclError in Gantt hover: {e}")
+        except Exception as e:
+            logger.warning(f"Error in Gantt hover: {e}")
 
     def _highlight_task(self, idx):
         """Highlight a task bar."""

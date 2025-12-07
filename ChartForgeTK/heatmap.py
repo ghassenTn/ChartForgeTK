@@ -18,11 +18,22 @@
 from typing import List, Optional, Tuple
 import tkinter as tk
 import math
+import logging
 from .core import Chart, ChartStyle
+from .validation import DataValidator
+
+logger = logging.getLogger('ChartForgeTK')
+
 
 class HeatMap(Chart):
-    def __init__(self, parent=None, width: int = 800, height: int = 600, display_mode='frame'):
-        super().__init__(parent, width=width, height=height, display_mode=display_mode)
+    """
+    Heatmap implementation with comprehensive input validation and edge case handling.
+    
+    Requirements: 1.1, 1.2, 1.3, 2.1, 2.2, 3.1, 3.2, 3.6, 9.1, 9.2
+    """
+    
+    def __init__(self, parent=None, width: int = 800, height: int = 600, display_mode='frame', theme='light'):
+        super().__init__(parent, width=width, height=height, display_mode=display_mode, theme=theme)
         self.cell_padding = 2
         self.interactive_cells = {}
         self._hover_tag = None
@@ -49,29 +60,127 @@ class HeatMap(Chart):
             row_labels: Optional list of row labels
             col_labels: Optional list of column labels
             title: Optional title for the heatmap
+            
+        Raises:
+            TypeError: If data is None or contains non-numeric values
+            ValueError: If data is empty or has inconsistent row lengths
+            
+        Requirements: 1.1, 1.2, 1.3, 2.1, 2.2, 3.1, 3.2, 3.6, 9.1, 9.2, 9.3, 9.4
         """
+        # Validate data is not None (Requirements: 1.1)
+        if data is None:
+            raise TypeError(
+                "[ChartForgeTK] Error: data cannot be None. "
+                "Please provide a 2D list of numeric values."
+            )
+        
+        # Validate data is a list (Requirements: 1.3)
+        if not isinstance(data, (list, tuple)):
+            raise TypeError(
+                f"[ChartForgeTK] Error: data must be a 2D list, "
+                f"got {type(data).__name__}."
+            )
+        
+        # Validate data is not empty (Requirements: 1.2)
         if not data or not data[0]:
-            raise ValueError("Data must be a non-empty 2D list")
+            raise ValueError(
+                "[ChartForgeTK] Error: data cannot be empty. "
+                "Please provide a non-empty 2D list of numeric values."
+            )
+        
+        # Validate each row is a list and has consistent length
+        num_cols = len(data[0])
+        for i, row in enumerate(data):
+            if not isinstance(row, (list, tuple)):
+                raise TypeError(
+                    f"[ChartForgeTK] Error: data[{i}] must be a list, "
+                    f"got {type(row).__name__}."
+                )
+            if len(row) != num_cols:
+                raise ValueError(
+                    f"[ChartForgeTK] Error: data[{i}] has {len(row)} columns, "
+                    f"expected {num_cols}. All rows must have the same length."
+                )
+            # Validate each value is numeric
+            for j, value in enumerate(row):
+                if not isinstance(value, (int, float)):
+                    raise TypeError(
+                        f"[ChartForgeTK] Error: data[{i}][{j}] must be a number, "
+                        f"got {type(value).__name__}."
+                    )
+                if math.isnan(value):
+                    raise ValueError(
+                        f"[ChartForgeTK] Error: data[{i}][{j}] is NaN. "
+                        f"NaN values are not allowed."
+                    )
+                if math.isinf(value):
+                    raise ValueError(
+                        f"[ChartForgeTK] Error: data[{i}][{j}] is infinity. "
+                        f"Infinite values are not allowed."
+                    )
+        
+        # Cancel pending animations before redrawing (Requirements: 3.2, 3.6)
+        self.resource_manager.cancel_animations()
+        
+        # Clean up previous tooltips (Requirements: 3.1)
+        self.resource_manager.cleanup_tooltips()
         
         self.clear()
         self.interactive_cells.clear()
         
-        num_rows = len(data)
-        num_cols = len(data[0])
+        # Create copies for immutability (Requirements: 9.1, 9.2)
+        # Store internal copy of data
+        self._data = [[float(val) for val in row] for row in data]
         
-        # Set default labels if not provided
-        if row_labels is None:
-            row_labels = [str(i) for i in range(num_rows)]
-        if col_labels is None:
-            col_labels = [str(i) for i in range(num_cols)]
+        num_rows = len(self._data)
+        num_cols = len(self._data[0])
+        
+        # Handle edge case: single data point (Requirements: 2.1)
+        if num_rows == 1 and num_cols == 1:
+            logger.debug("Single data point detected in heatmap")
+        
+        # Validate and set labels (Requirements: 9.3)
+        if row_labels is not None:
+            if not isinstance(row_labels, (list, tuple)):
+                raise TypeError(
+                    f"[ChartForgeTK] Error: row_labels must be a list, "
+                    f"got {type(row_labels).__name__}."
+                )
+            if len(row_labels) != num_rows:
+                raise ValueError(
+                    f"[ChartForgeTK] Error: Number of row_labels ({len(row_labels)}) "
+                    f"must match number of rows ({num_rows})."
+                )
+            self._row_labels = [str(label) for label in row_labels]  # Create copy
+        else:
+            self._row_labels = [str(i) for i in range(num_rows)]
+            
+        if col_labels is not None:
+            if not isinstance(col_labels, (list, tuple)):
+                raise TypeError(
+                    f"[ChartForgeTK] Error: col_labels must be a list, "
+                    f"got {type(col_labels).__name__}."
+                )
+            if len(col_labels) != num_cols:
+                raise ValueError(
+                    f"[ChartForgeTK] Error: Number of col_labels ({len(col_labels)}) "
+                    f"must match number of columns ({num_cols})."
+                )
+            self._col_labels = [str(label) for label in col_labels]  # Create copy
+        else:
+            self._col_labels = [str(i) for i in range(num_cols)]
             
         if title:
-            self.title = title
+            self.title = str(title)
         
         # Find data range for color scaling
-        all_values = [val for row in data for val in row]
+        all_values = [val for row in self._data for val in row]
         data_min = min(all_values)
         data_max = max(all_values)
+        
+        # Handle edge case: all values identical (Requirements: 2.2)
+        if data_min == data_max:
+            logger.debug(f"All heatmap values identical ({data_min}), using default color range")
         
         # Calculate cell size
         available_width = self.width - 2 * self.padding - 100  # Extra space for labels
@@ -80,7 +189,7 @@ class HeatMap(Chart):
         cell_height = available_height / num_rows
         
         # Draw column labels
-        for j, label in enumerate(col_labels):
+        for j, label in enumerate(self._col_labels):
             x = self.padding + 100 + j * cell_width + cell_width/2
             y = self.padding + 50
             self.canvas.create_text(
@@ -92,7 +201,7 @@ class HeatMap(Chart):
             )
         
         # Draw row labels
-        for i, label in enumerate(row_labels):
+        for i, label in enumerate(self._row_labels):
             x = self.padding + 80
             y = self.padding + 100 + i * cell_height + cell_height/2
             self.canvas.create_text(
@@ -106,7 +215,7 @@ class HeatMap(Chart):
         # Draw cells
         for i in range(num_rows):
             for j in range(num_cols):
-                value = data[i][j]
+                value = self._data[i][j]
                 
                 # Calculate color based on value
                 color_idx = (value - data_min) / (data_max - data_min) if data_max != data_min else 0.5
@@ -133,8 +242,8 @@ class HeatMap(Chart):
                     'row': i,
                     'col': j,
                     'value': value,
-                    'row_label': row_labels[i],
-                    'col_label': col_labels[j],
+                    'row_label': self._row_labels[i],
+                    'col_label': self._col_labels[j],
                     'color': color
                 }
         
@@ -223,34 +332,47 @@ class HeatMap(Chart):
         )
     
     def _add_interactivity(self):
-        """Add hover effects and tooltips to cells."""
+        """Add hover effects and tooltips to cells.
+        
+        Requirements: 3.1, 3.5, 7.1, 7.2, 7.6
+        """
         def on_enter(event):
+            """Handle mouse enter events (Requirements: 7.2)"""
             try:
                 # Get the current cell
                 item = event.widget.find_closest(event.x, event.y)[0]
-                if not item in self.interactive_cells:
+                if item not in self.interactive_cells:
                     return
                     
                 # Clean up old tooltip
-                self.canvas.delete('tooltip')
+                try:
+                    self.canvas.delete('tooltip')
+                except tk.TclError:
+                    pass
                 
                 # Reset previous cell if exists
                 if self._hover_tag:
-                    self.canvas.itemconfig(
-                        self._hover_tag,
-                        outline=self.style.BACKGROUND,
-                        width=self.cell_padding
-                    )
+                    try:
+                        self.canvas.itemconfig(
+                            self._hover_tag,
+                            outline=self.style.BACKGROUND,
+                            width=self.cell_padding
+                        )
+                    except tk.TclError:
+                        pass
                 
                 # Get cell info
                 info = self.interactive_cells[item]
                 
                 # Highlight current cell
-                self.canvas.itemconfig(
-                    item,
-                    outline=self.style.ACCENT,
-                    width=2
-                )
+                try:
+                    self.canvas.itemconfig(
+                        item,
+                        outline=self.style.ACCENT,
+                        width=2
+                    )
+                except tk.TclError:
+                    return
                 
                 # Create simple tooltip
                 x1, y1, x2, y2 = self.canvas.coords(item)
@@ -258,7 +380,7 @@ class HeatMap(Chart):
                 tooltip_y = y1 - 5
                 
                 # Create background first
-                background = self.canvas.create_rectangle(
+                self.canvas.create_rectangle(
                     tooltip_x - 60, tooltip_y - 40,
                     tooltip_x + 60, tooltip_y - 5,
                     fill=self.style.BACKGROUND,
@@ -279,26 +401,55 @@ class HeatMap(Chart):
                 
                 self._hover_tag = item
                 
-            except Exception as e:
-                print(f"Hover error: {e}")
-                self.canvas.delete('tooltip')
+            except tk.TclError as e:
+                logger.debug(f"TclError in heatmap hover: {e}")
+                try:
+                    self.canvas.delete('tooltip')
+                except tk.TclError:
+                    pass
                 if self._hover_tag:
+                    try:
+                        self.canvas.itemconfig(
+                            self._hover_tag,
+                            outline=self.style.BACKGROUND,
+                            width=self.cell_padding
+                        )
+                    except tk.TclError:
+                        pass
+                self._hover_tag = None
+            except Exception as e:
+                logger.warning(f"Hover error in heatmap: {e}")
+                try:
+                    self.canvas.delete('tooltip')
+                except tk.TclError:
+                    pass
+                if self._hover_tag:
+                    try:
+                        self.canvas.itemconfig(
+                            self._hover_tag,
+                            outline=self.style.BACKGROUND,
+                            width=self.cell_padding
+                        )
+                    except tk.TclError:
+                        pass
+                self._hover_tag = None
+
+        def on_leave(event):
+            """Handle mouse leave events"""
+            # Simple cleanup
+            if self._hover_tag:
+                try:
                     self.canvas.itemconfig(
                         self._hover_tag,
                         outline=self.style.BACKGROUND,
                         width=self.cell_padding
                     )
-                self._hover_tag = None
-
-        def on_leave(event):
-            # Simple cleanup
-            if self._hover_tag:
-                self.canvas.itemconfig(
-                    self._hover_tag,
-                    outline=self.style.BACKGROUND,
-                    width=self.cell_padding
-                )
-            self.canvas.delete('tooltip')
+                except tk.TclError:
+                    pass
+            try:
+                self.canvas.delete('tooltip')
+            except tk.TclError:
+                pass
             self._hover_tag = None
 
         # Only bind enter/leave events
