@@ -2,6 +2,7 @@
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
 [![Tkinter](https://img.shields.io/badge/Framework-Tkinter-orange.svg)](https://docs.python.org/3/library/tkinter.html)
+<img width="1917" height="1048" alt="readme_image" src="https://github.com/user-attachments/assets/6551f222-4274-4db3-a9e6-33ced04cc32b" />
 
 # ChartForgeTK
 
