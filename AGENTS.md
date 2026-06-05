@@ -35,3 +35,4 @@ BarChart, LineChart, PieChart, ScatterPlot, BubbleChart, BoxPlot, Histogram, Can
 - README license badge says MIT, but headers in source files and the `LICENSE` file are Apache 2.0
 - There is no linter, formatter, or type checker configured
 - The only dependency is `typing` (only needed for Python < 3.5; effectively none for 3.8+)
+.
