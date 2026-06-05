@@ -49,7 +49,7 @@ class TableauChart(Chart):
     """
     
     def __init__(self, parent: Optional[tk.Widget] = None, width: int = 800, height: int = 600, 
-                 display_mode: str = 'frame', theme: str = 'dark'):
+                 display_mode: str = 'frame', theme: str = 'dark', palette: str = 'modern'):
         """
         Initialize the TableauChart.
 
@@ -59,8 +59,9 @@ class TableauChart(Chart):
             height (int): The height of the chart.
             display_mode (str): The display mode ('frame' or 'canvas').
             theme (str): The theme of the chart ('dark' or 'light').
+            palette (str): The color palette.
         """
-        super().__init__(parent, width=width, height=height, display_mode=display_mode, theme=theme)
+        super().__init__(parent, width=width, height=height, display_mode=display_mode, theme=theme, palette=palette)
         self.parent = parent
         self.data = []
         self.columns = []

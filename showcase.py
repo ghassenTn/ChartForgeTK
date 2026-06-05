@@ -40,6 +40,7 @@ from ChartForgeTK import (
     CandlestickChart,
     TableauChart,
     GanttChart,
+    ChartStyle,
     # New stability modules
     DataValidator,
     ResourceManager,
@@ -57,51 +58,78 @@ try:
 except ImportError:
     PANDAS_AVAILABLE = False
 class ChartApp(tk.Tk):
+    THEMES = ['light', 'dark', 'corporate', 'pastel', 'monochrome', 'ocean', 'sunset', 'forest']
+    PALETTES = ['modern', 'corporate', 'pastel', 'vibrant', 'monochrome', 'ocean', 'sunset', 'forest']
+
     def __init__(self):
         super().__init__()
-        self.title("ChartForgeTK Dashboard")
-        self.geometry("800x600")
+        self.title("ChartForgeTK Dashboard - Professional Edition")
+        self.geometry("900x700")
+        
+        self.current_theme = tk.StringVar(value='light')
+        self.current_palette = tk.StringVar(value='modern')
+        
+        top_frame = ttk.Frame(self)
+        top_frame.pack(fill='x', padx=10, pady=5)
+        
+        ttk.Label(top_frame, text="Theme:", font=('Helvetica', 10, 'bold')).pack(side='left', padx=(0,5))
+        theme_menu = ttk.Combobox(top_frame, textvariable=self.current_theme,
+                                 values=self.THEMES, state='readonly', width=12)
+        theme_menu.pack(side='left', padx=5)
+        
+        ttk.Label(top_frame, text="Palette:", font=('Helvetica', 10, 'bold')).pack(side='left', padx=(10,5))
+        palette_menu = ttk.Combobox(top_frame, textvariable=self.current_palette,
+                                   values=self.PALETTES, state='readonly', width=12)
+        palette_menu.pack(side='left', padx=5)
+        
+        ttk.Button(top_frame, text="Apply", command=self.apply_theme_palette).pack(side='left', padx=10)
+        
         notebook = ttk.Notebook(self)
         notebook.pack(fill='both', expand=True, padx=10, pady=10)
+        
+        self.charts = {}
+        
         # Bar Chart Tab 
         bar_frame = ttk.Frame(notebook)
         notebook.add(bar_frame, text="Bar Chart")
-        bar_chart = BarChart(bar_frame, width=780, height=520)
+        bar_chart = BarChart(bar_frame, width=780, height=500)
         bar_chart.pack(fill='both', expand=True)
-        self.bar_chart = bar_chart
-        bar_data = [10, 20, 15, 25,30]
-        bar_labels = ["Q1", "Q2", "Q3", "Q4","Q5"]
+        self.charts['bar'] = bar_chart
+        bar_data = [10, 20, 15, 25, 30]
+        bar_labels = ["Q1", "Q2", "Q3", "Q4", "Q5"]
         bar_chart.plot(bar_data, bar_labels)
         ttk.Button(bar_frame, text="Refresh Data", command=self.refresh_bar_data).pack(pady=5)
+        
         # Line Chart Tab 
         line_frame = ttk.Frame(notebook)
         notebook.add(line_frame, text="Line Chart")
-        line_chart = LineChart(line_frame, width=780, height=520)
+        line_chart = LineChart(line_frame, width=780, height=500)
         line_chart.pack(fill='both', expand=True)
-        self.line_chart = line_chart
+        self.charts['line'] = line_chart
         line_chart.plot([
-            {'data': [10, 15, 13, 18, 16, 20], 'color': '#FF0000', 'shape': 'circle', 'label': 'Red Circles'},
-            {'data': [5, 8, 7, 12, 10, 15], 'color': '#00FF00', 'shape': 'square', 'label': 'Green Squares'},
-            {'data': [15, 12, 14, 10, 13, 11], 'color': '#0000FF', 'shape': 'triangle', 'label': 'Blue Triangles'}
+            {'data': [10, 15, 13, 18, 16, 20], 'color': '#2563EB', 'shape': 'circle', 'label': 'Series A'},
+            {'data': [5, 8, 7, 12, 10, 15], 'color': '#10B981', 'shape': 'square', 'label': 'Series B'},
+            {'data': [15, 12, 14, 10, 13, 11], 'color': '#F43F5E', 'shape': 'diamond', 'label': 'Series C'}
         ])
         ttk.Button(line_frame, text="Refresh Data", command=self.refresh_line_data).pack(pady=5)
+        
         # Pie Chart Tab
         pie_frame = ttk.Frame(notebook)
         notebook.add(pie_frame, text="Pie Chart")
-        pie_chart = PieChart(pie_frame, width=780, height=520)
+        pie_chart = PieChart(pie_frame, width=780, height=500)
         pie_chart.pack(fill='both', expand=True)
-        self.pie_chart = pie_chart
-        pie_data = [30, 20, 15, 35,44,34,34]
-        pie_labels = ["A", "B", "C", "D","R","E","L"]
+        self.charts['pie'] = pie_chart
+        pie_data = [30, 20, 15, 35, 44, 34, 34]
+        pie_labels = ["A", "B", "C", "D", "R", "E", "L"]
         pie_chart.plot(pie_data, pie_labels)
         ttk.Button(pie_frame, text="Refresh Data", command=self.refresh_pie_data).pack(pady=5)
         
         # Scatter Plot Tab
         scatter_frame = ttk.Frame(notebook)
         notebook.add(scatter_frame, text="Scatter Plot")
-        scatter_chart = ScatterPlot(scatter_frame, width=780, height=520)
+        scatter_chart = ScatterPlot(scatter_frame, width=780, height=500)
         scatter_chart.pack(fill='both', expand=True)
-        self.scatter_chart = scatter_chart
+        self.charts['scatter'] = scatter_chart
         scatter_data = [(1, 10), (2, 15), (3, 13), (4, 18), (5, 16)]
         scatter_chart.plot(scatter_data)
         ttk.Button(scatter_frame, text="Refresh Data", command=self.refresh_scatter_data).pack(pady=5)
@@ -109,9 +137,9 @@ class ChartApp(tk.Tk):
         # Bubble Chart Tab 
         bubble_frame = ttk.Frame(notebook)
         notebook.add(bubble_frame, text="Bubble Chart")
-        bubble_chart = BubbleChart(bubble_frame, width=780, height=520)
+        bubble_chart = BubbleChart(bubble_frame, width=780, height=500)
         bubble_chart.pack(fill='both', expand=True)
-        self.bubble_chart = bubble_chart
+        self.charts['bubble'] = bubble_chart
         bubble_data = [(1, 10, 5), (2, 15, 10), (3, 13, 15), (4, 18, 20), (5, 16, 25)]
         bubble_chart.plot(bubble_data)
         ttk.Button(bubble_frame, text="Refresh Data", command=self.refresh_bubble_data).pack(pady=5)
@@ -119,9 +147,9 @@ class ChartApp(tk.Tk):
         # Box Plot Tab
         box_frame = ttk.Frame(notebook)
         notebook.add(box_frame, text="Box Plot")
-        box_chart = BoxPlot(box_frame, width=780, height=520)
+        box_chart = BoxPlot(box_frame, width=780, height=500)
         box_chart.pack(fill='both', expand=True)
-        self.box_chart = box_chart
+        self.charts['box'] = box_chart
         box_data = [[1, 2, 3, 4, 5, 6, 7], [2, 4, 6, 8, 10, 12, 14],
                    [1, 3, 5, 7, 9, 11, 20], [5, 10, 15, 20, 25, 30, 35]]
         box_labels = ["A", "B", "C", "D"]
@@ -131,27 +159,25 @@ class ChartApp(tk.Tk):
         # Histogram Tab 
         hist_frame = ttk.Frame(notebook)
         notebook.add(hist_frame, text="Histogram")
-        hist_chart = Histogram(hist_frame, width=780, height=520)
+        hist_chart = Histogram(hist_frame, width=780, height=500)
         hist_chart.pack(fill='both', expand=True)
-        self.hist_chart = hist_chart
+        self.charts['hist'] = hist_chart
         hist_data = [1, 1.5, 2, 2, 2.5, 3, 3, 3.5, 4, 4.5, 5, 5, 5.5, 6, 6.5]
         hist_chart.plot(hist_data, bins=5)
         ttk.Button(hist_frame, text="Refresh Data", command=self.refresh_hist_data).pack(pady=5)
         # Tableau Chart Tab
         tableau_frame = ttk.Frame(notebook,width=1200,height=500)
         notebook.add(tableau_frame, text="Tableau Chart")
-        tableau_chart = TableauChart(tableau_frame, width=1200, height=520,theme='light')
+        tableau_chart = TableauChart(tableau_frame, width=1200, height=520, theme='light')
         tableau_chart.pack(fill='both', expand=True)
-        self.tableau_chart = tableau_chart
+        self.charts['tableau'] = tableau_chart
         tableau_data = [
-
             {"Name": "Alice", "Age": 25, "Score": 95.5, "City": "New York", "Gender": "Female", "Occupation": "Engineer", "Email": "alice@example.com"},
             {"Name": "Bob", "Age": 30, "Score": 87.0, "City": "London", "Gender": "Male", "Occupation": "Doctor", "Email": "bob@example.com"},
             {"Name": "Charlie", "Age": 22, "Score": 91.2, "City": "Paris", "Gender": "Male", "Occupation": "Artist", "Email": "charlie@example.com"},
             {"Name": "David", "Age": 35, "Score": 78.9, "City": "Tokyo", "Gender": "Male", "Occupation": "Teacher", "Email": "david@example.com"},
             {"Name": "Eve", "Age": 28, "Score": 99.1, "City": "Sydney", "Gender": "Female", "Occupation": "Scientist", "Email": "eve@example.com"}
         ]
-
         tableau_chart.plot(tableau_data)
         ttk.Button(tableau_frame, text="Refresh Data", command=self.refresh_tableau_data).pack(pady=5)
 
@@ -581,50 +607,58 @@ class ChartApp(tk.Tk):
         messagebox.showinfo("Coordinate Transform", "\n".join(results))
         self.stability_status.config(text="✓ Coordinate transform demo complete")
 
+    def apply_theme_palette(self):
+        theme = self.current_theme.get()
+        palette = self.current_palette.get()
+        for key, chart in self.charts.items():
+            chart.style.set_theme(theme)
+            chart.style.set_palette(palette)
+            chart.style._load_theme(theme)
+            chart.style._load_palette(palette)
+            chart.redraw()
+
     def refresh_bar_data(self):
         new_data = [random.randint(5, 30) for _ in range(4)]
         new_labels = ["Q1", "Q2", "Q3", "Q4"]
-        self.bar_chart.plot(new_data, new_labels)
+        self.charts['bar'].plot(new_data, new_labels)
 
     def refresh_line_data(self):
-        shapes = ['circle', 'square', 'triangle']
-        colors = ['#FF0000', '#00FF00', '#0000FF']  # Red, Green, Blue        
+        colors = ['#2563EB', '#10B981', '#F43F5E']
         line_data = [
             {
                 'data': [random.randint(5, 30) for _ in range(7)],
                 'color': colors[0],
-                'shape': shapes[0],
-                'label': 'Red Circles'
+                'shape': 'circle',
+                'label': 'Series A'
             },
             {
                 'data': [random.randint(5, 30) for _ in range(7)],
                 'color': colors[1],
-                'shape': shapes[1],
-                'label': 'Green Squares'
+                'shape': 'square',
+                'label': 'Series B'
             },
             {
                 'data': [random.randint(5, 30) for _ in range(7)],
                 'color': colors[2],
-                'shape': shapes[2],
-                'label': 'Blue Triangles'
+                'shape': 'diamond',
+                'label': 'Series C'
             }
         ]
-        
-        self.line_chart.plot(line_data)
+        self.charts['line'].plot(line_data)
 
     def refresh_pie_data(self):
         new_data = [random.randint(10, 40) for _ in range(4)]
         new_labels = ["A", "B", "C", "D"]
-        self.pie_chart.plot(new_data, new_labels)
+        self.charts['pie'].plot(new_data, new_labels)
 
     def refresh_scatter_data(self):
         new_data = [(random.uniform(0, 5), random.uniform(5, 20)) for _ in range(5)]
-        self.scatter_chart.plot(new_data)
+        self.charts['scatter'].plot(new_data)
 
     def refresh_bubble_data(self):
         new_data = [(random.uniform(0, 5), random.uniform(5, 20), random.uniform(5, 30)) 
                    for _ in range(5)]
-        self.bubble_chart.plot(new_data)
+        self.charts['bubble'].plot(new_data)
 
     def refresh_box_data(self):
         new_data = [
@@ -634,11 +668,11 @@ class ChartApp(tk.Tk):
             sorted([random.uniform(15, 35) for _ in range(random.randint(5, 10))])
         ]
         new_labels = ["A", "B", "C", "D"]
-        self.box_chart.plot(new_data, new_labels)
+        self.charts['box'].plot(new_data, new_labels)
 
     def refresh_hist_data(self):
         new_data = [random.uniform(0, 20) for _ in range(50)]
-        self.hist_chart.plot(new_data, bins=10)
+        self.charts['hist'].plot(new_data, bins=10)
 
     def refresh_candle_data(self):
         new_data = []
@@ -652,10 +686,9 @@ class ChartApp(tk.Tk):
             low = min(low, open_price, close_price)
             new_data.append((i + 1, round(open_price, 2), round(high, 2), round(low, 2), round(close_price, 2)))
             last_close = close_price
-        self.candle_chart.plot(new_data)
+        self.charts['candle'].plot(new_data)
 
     def refresh_tableau_data(self):
-        """Generate new random data for Tableau Chart"""
         names = ["Alice", "Bob", "Charlie", "David", "Eve", "Frank", "Grace"]
         cities = ["New York", "London", "Paris", "Tokyo", "Sydney", "Berlin", "Moscow"]
         new_data = [
@@ -666,7 +699,7 @@ class ChartApp(tk.Tk):
                 "City": random.choice(cities)
             } for _ in range(random.randint(5, 10))
         ]
-        self.tableau_chart.plot(new_data)
+        self.charts['tableau'].plot(new_data)
 
 if __name__ == "__main__":
     app = ChartApp()

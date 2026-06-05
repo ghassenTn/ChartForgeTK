@@ -34,8 +34,8 @@ class PieChart(Chart):
     """
     
     def __init__(self, parent=None, width: int = 800, height: int = 600, display_mode='frame', 
-                 theme='light', is_3d: bool = False):
-        super().__init__(parent, width=width, height=height, display_mode=display_mode, theme=theme)
+                 theme='light', palette='modern', is_3d: bool = False):
+        super().__init__(parent, width=width, height=height, display_mode=display_mode, theme=theme, palette=palette)
         self.data = []
         self.labels = []
         self.radius = min(width, height) * 0.35  # 70% of smallest dimension
@@ -302,51 +302,18 @@ class PieChart(Chart):
         
         Requirements: 3.1, 3.5, 7.1, 7.2, 7.6
         """
-        # Create tooltip window
-        tooltip = tk.Toplevel()
-        tooltip.withdraw()
-        tooltip.overrideredirect(True)
-        try:
-            tooltip.attributes('-topmost', True)
-        except tk.TclError:
-            pass  # Some platforms may not support this
-        
-        # Register tooltip with resource manager (Requirements: 3.1, 7.6)
-        self.resource_manager.register_tooltip(tooltip)
-        self._tooltip = tooltip
-        
-        tooltip_frame = ttk.Frame(tooltip, style='Tooltip.TFrame')
-        tooltip_frame.pack(fill='both', expand=True)
-        label = ttk.Label(tooltip_frame,
-                         style='Tooltip.TLabel',
-                         font=self.style.TOOLTIP_FONT)
-        label.pack(padx=8, pady=4)
-        
-        style = ttk.Style()
-        style.configure('Tooltip.TFrame',
-                       background=self.style.TEXT,
-                       relief='solid',
-                       borderwidth=0)
-        style.configure('Tooltip.TLabel',
-                       background=self.style.TEXT,
-                       foreground=self.style.BACKGROUND,
-                       font=self.style.TOOLTIP_FONT)
-        
         current_highlight = None
         
         def on_motion(event):
-            """Handle mouse motion events (Requirements: 7.2)"""
             nonlocal current_highlight
             
-            # Safety check - ensure data exists
             if not self.data:
                 return
             
             x, y = event.x, event.y
             
-            # Calculate angle from center
             dx = x - self.center_x
-            dy = -(y - self.center_y)  # Invert y for canvas coordinates
+            dy = -(y - self.center_y)
             dist = math.sqrt(dx*dx + dy*dy)
             
             if dist <= self.radius:
@@ -360,6 +327,7 @@ class PieChart(Chart):
                             if current_highlight:
                                 self.canvas.delete(current_highlight)
                             
+                            color = self.style.get_color(i)
                             highlight = self.canvas.create_arc(
                                 self.center_x - self.radius * 1.1,
                                 self.center_y - self.radius * 1.1,
@@ -367,21 +335,20 @@ class PieChart(Chart):
                                 self.center_y + self.radius * 1.1 - (self.thickness * self.tilt_factor if self.is_3d else 0),
                                 start=math.degrees(current_angle),
                                 extent=math.degrees(slice_angle),
-                                outline=self.style.ACCENT,
-                                width=2,
+                                outline=color,
+                                width=3,
                                 style=tk.PIESLICE,
                                 tags=('highlight',)
                             )
                             current_highlight = highlight
                             
                             percentage = (value / self.total) * 100
-                            tooltip_text = f"{self.labels[i]}\nValue: {value:,.2f}\n{percentage:.1f}%"
-                            label.config(text=tooltip_text)
-                            tooltip.wm_geometry(f"+{event.x_root+10}+{event.y_root-40}")
-                            tooltip.deiconify()
-                            tooltip.lift()
+                            self.show_tooltip(
+                                event.x_root, event.y_root,
+                                f"{self.labels[i]}\nValue: {value:,.2f}\n{percentage:.1f}%"
+                            )
                         except tk.TclError:
-                            pass  # Widget may have been destroyed
+                            pass
                         break
                     current_angle += slice_angle
             else:
@@ -389,30 +356,27 @@ class PieChart(Chart):
                     if current_highlight:
                         self.canvas.delete(current_highlight)
                         current_highlight = None
-                    tooltip.withdraw()
+                    self.hide_tooltip()
                 except tk.TclError:
                     pass
         
         def on_leave(event):
-            """Handle mouse leave events"""
             nonlocal current_highlight
             try:
                 if current_highlight:
                     self.canvas.delete(current_highlight)
                     current_highlight = None
-                tooltip.withdraw()
+                self.hide_tooltip()
             except tk.TclError:
                 pass
         
         def on_click(event):
-            """Handle mouse click events (Requirements: 7.3)"""
-            # Safety check - ensure data exists
             if not self.data:
                 return
             
             x, y = event.x, event.y
             dx = x - self.center_x
-            dy = -(y - self.center_y)  # Invert y for canvas coordinates
+            dy = -(y - self.center_y)
             dist = math.sqrt(dx*dx + dy*dy)
             
             if dist <= self.radius:
@@ -429,7 +393,6 @@ class PieChart(Chart):
                         break
                     current_angle += slice_angle
         
-        # Bind events and register with resource manager (Requirements: 3.5)
         motion_id = self.canvas.bind('<Motion>', on_motion)
         leave_id = self.canvas.bind('<Leave>', on_leave)
         click_id = self.canvas.bind('<Button-1>', on_click)

@@ -33,8 +33,8 @@ class BarChart(Chart):
     Requirements: 1.1, 1.2, 1.3, 1.4, 2.1, 2.2, 2.4, 3.1, 3.2, 3.6, 9.1, 9.2
     """
     
-    def __init__(self, parent=None, width: int = 800, height: int = 600, display_mode='frame', theme='light'):
-        super().__init__(parent, width=width, height=height, display_mode=display_mode, theme=theme)
+    def __init__(self, parent=None, width: int = 800, height: int = 600, display_mode='frame', theme='light', palette='modern'):
+        super().__init__(parent, width=width, height=height, display_mode=display_mode, theme=theme, palette=palette)
         self.data = []
         self.labels = []
         self.bar_width_factor = 0.8  # Percentage of available space per bar
@@ -154,7 +154,7 @@ class BarChart(Chart):
 
     def _animate_bars(self, y_min: float, y_max: float):
         """
-        Draw bars with smooth height animation.
+        Draw bars with smooth height animation and professional styling.
         
         Handles edge cases:
         - Single data point (Requirements: 2.1)
@@ -163,19 +163,19 @@ class BarChart(Chart):
         
         Requirements: 3.2, 3.6
         """
-        # Handle edge case: single data point (Requirements: 2.1)
         if len(self.data) == 1:
-            bar_spacing = (self.width - 2 * self.padding) / 2  # Center the single bar
+            bar_spacing = (self.width - 2 * self.padding) / 2
             bar_width = bar_spacing * self.bar_width_factor
         else:
             bar_spacing = (self.width - 2 * self.padding) / len(self.data)
             bar_width = bar_spacing * self.bar_width_factor
         
+        corner_radius = min(4, bar_width / 4)
+        
         def ease(t):
-            return t * t * (3 - 2 * t)  # Ease-in-out
+            return t * t * (3 - 2 * t)
         
         def update_animation(frame: int, total_frames: int):
-            # Check if widget still exists before updating (Requirements: 6.3)
             try:
                 if not self.canvas.winfo_exists():
                     return
@@ -184,7 +184,6 @@ class BarChart(Chart):
             
             progress = ease(frame / total_frames)
             
-            # Clear previous bars
             for item in self.bars:
                 try:
                     self.canvas.delete(item)
@@ -197,44 +196,54 @@ class BarChart(Chart):
                 y_base = self._data_to_pixel_y(y_min, y_min, y_max)
                 y_top = self._data_to_pixel_y(value, y_min, y_max)
                 
-                # Handle zero values - ensure bar is still visible as a line (Requirements: 2.4)
                 if value == 0:
                     y_current = y_base
                 else:
                     y_current = y_base - (y_base - y_top) * progress
                 
-                # Get color
-                color = self.style.get_gradient_color(i, len(self.data))
+                color = self.style.get_color(i)
                 
-                # Draw shadow (only if bar has height)
+                # Gradient bar
+                x1 = x - bar_width / 2
+                x2 = x + bar_width / 2
+                
                 if y_current < y_base:
-                    shadow = self.canvas.create_rectangle(
-                        x - bar_width/2 + 3,
-                        y_current + 3,
-                        x + bar_width/2 + 3,
-                        y_base + 3,
-                        fill=self.style.create_shadow(color),
-                        outline="",
-                        tags=('shadow', f'bar_{i}')
+                    num_steps = max(8, int((y_base - y_current) / 3))
+                    step_h = (y_base - y_current) / num_steps
+                    for s in range(num_steps):
+                        sy1 = y_current + s * step_h
+                        sy2 = sy1 + step_h + 1
+                        ratio = s / num_steps
+                        lighter = self.style.create_lighter(color, 1.0 + 0.3 * (1 - ratio))
+                        self.bars.append(
+                            self.canvas.create_rectangle(
+                                x1, sy1, x2, sy2,
+                                fill=lighter, outline="",
+                                tags=('bar_grad', f'bar_{i}')
+                            )
+                        )
+                    
+                    # Highlight top edge
+                    self.bars.append(
+                        self.canvas.create_line(
+                            x1, y_current, x2, y_current,
+                            fill=self.style.create_lighter(color, 1.4),
+                            width=2, capstyle=tk.ROUND,
+                            tags=('bar_highlight', f'bar_{i}')
+                        )
                     )
-                    self.bars.append(shadow)
+                    
+                    # Bottom shadow
+                    self.bars.append(
+                        self.canvas.create_rectangle(
+                            x1 + 2, y_base - 1, x2 + 2, y_base + 2,
+                            fill=self.style.create_shadow(color, 0.5),
+                            outline="",
+                            tags=('shadow', f'bar_{i}')
+                        )
+                    )
                 
-                # Draw bar with gradient (Requirements: 2.4 - zero-height bars render without errors)
-                bar = self.canvas.create_rectangle(
-                    x - bar_width/2,
-                    y_current,
-                    x + bar_width/2,
-                    y_base,
-                    fill=color,
-                    outline=self.style.adjust_brightness(color, 0.8),
-                    width=1,
-                    tags=('bar', f'bar_{i}')
-                )
-                self.bars.append(bar)
-                
-                # Add label when fully drawn
                 if progress == 1:
-                    # Format value appropriately
                     if value == 0:
                         value_text = "0"
                     elif value == int(value):
@@ -242,25 +251,102 @@ class BarChart(Chart):
                     else:
                         value_text = f"{value:,.1f}"
                     
-                    label = self.canvas.create_text(
-                        x,
-                        y_top - 10,
-                        text=f"{self.labels[i]}\n{value_text}",
-                        font=self.style.VALUE_FONT,
-                        fill=self.style.TEXT,
-                        anchor='s',
-                        justify='center',
-                        tags=('label', f'bar_{i}')
+                    label_y = y_top - 8
+                    self.bars.append(
+                        self.canvas.create_text(
+                            x, label_y,
+                            text=f"{value_text}",
+                            font=self.style.VALUE_FONT,
+                            fill=self.style.TEXT,
+                            anchor='s',
+                            tags=('label', f'bar_{i}')
+                        )
                     )
-                    self.bars.append(label)
             
             if frame < total_frames:
-                # Register animation callback with resource manager (Requirements: 3.2, 3.6)
                 after_id = self.canvas.after(16, update_animation, frame + 1, total_frames)
                 self.resource_manager.register_animation(after_id)
         
-        total_frames = self.animation_duration // 16  # ~60 FPS
+        total_frames = self.animation_duration // 16
         update_animation(0, total_frames)
+    
+    def _redraw_bars(self, y_min, y_max):
+        """Redraw bars for resize/redraw without animation."""
+        if len(self.data) == 1:
+            bar_spacing = (self.width - 2 * self.padding) / 2
+            bar_width = bar_spacing * self.bar_width_factor
+        else:
+            bar_spacing = (self.width - 2 * self.padding) / len(self.data)
+            bar_width = bar_spacing * self.bar_width_factor
+        
+        for i, value in enumerate(self.data):
+            x = self._data_to_pixel_x(i, -0.5, len(self.data) - 0.5)
+            y_base = self._data_to_pixel_y(y_min, y_min, y_max)
+            y_top = self._data_to_pixel_y(value, y_min, y_max)
+            
+            color = self.style.get_color(i)
+            x1 = x - bar_width / 2
+            x2 = x + bar_width / 2
+            
+            num_steps = max(8, int((y_base - y_top) / 3))
+            step_h = (y_base - y_top) / num_steps
+            for s in range(num_steps):
+                sy1 = y_top + s * step_h
+                sy2 = sy1 + step_h + 1
+                ratio = s / num_steps
+                lighter = self.style.create_lighter(color, 1.0 + 0.3 * (1 - ratio))
+                self.canvas.create_rectangle(
+                    x1, sy1, x2, sy2,
+                    fill=lighter, outline="",
+                    tags=('bar_grad', f'bar_{i}')
+                )
+            
+            self.canvas.create_line(
+                x1, y_top, x2, y_top,
+                fill=self.style.create_lighter(color, 1.4),
+                width=2, capstyle=tk.ROUND,
+                tags=('bar_highlight', f'bar_{i}')
+            )
+            
+            self.canvas.create_rectangle(
+                x1 + 2, y_base - 1, x2 + 2, y_base + 2,
+                fill=self.style.create_shadow(color, 0.5),
+                outline="",
+                tags=('shadow', f'bar_{i}')
+            )
+            
+            if value == 0:
+                value_text = "0"
+            elif value == int(value):
+                value_text = f"{int(value):,}"
+            else:
+                value_text = f"{value:,.1f}"
+            
+            self.canvas.create_text(
+                x, y_top - 8,
+                text=value_text,
+                font=self.style.VALUE_FONT,
+                fill=self.style.TEXT,
+                anchor='s',
+                tags=('label', f'bar_{i}')
+            )
+
+    def redraw_chart(self):
+        """Redraw chart for resize events."""
+        if not self.data:
+            return
+        x_min, x_max = -0.5, len(self.data) - 0.5
+        y_min = 0
+        y_max = max(self.data) if self.data else 0
+        if y_max == 0:
+            y_max = 1.0
+        elif len(set(self.data)) == 1:
+            y_max = self.data[0] * 1.2 if self.data[0] > 0 else 1.0
+        else:
+            y_max += y_max * 0.1
+        self._draw_axes(x_min, x_max, y_min, y_max)
+        self._redraw_bars(y_min, y_max)
+        self._add_interactive_effects()
 
     def _add_interactive_effects(self):
         """
@@ -268,43 +354,12 @@ class BarChart(Chart):
         
         Requirements: 3.1, 3.5, 7.1, 7.2, 7.6
         """
-        # Create tooltip window
-        tooltip = tk.Toplevel()
-        tooltip.withdraw()
-        tooltip.overrideredirect(True)
-        try:
-            tooltip.attributes('-topmost', True)
-        except tk.TclError:
-            pass  # Some platforms may not support this
-        
-        # Register tooltip with resource manager (Requirements: 3.1, 7.6)
-        self.resource_manager.register_tooltip(tooltip)
-        self._tooltip = tooltip
-        
-        tooltip_frame = ttk.Frame(tooltip, style='Tooltip.TFrame')
-        tooltip_frame.pack(fill='both', expand=True)
-        label = ttk.Label(tooltip_frame,
-                         style='Tooltip.TLabel',
-                         font=self.style.TOOLTIP_FONT)
-        label.pack(padx=8, pady=4)
-        
-        style = ttk.Style()
-        style.configure('Tooltip.TFrame',
-                       background=self.style.TEXT,
-                       relief='solid',
-                       borderwidth=0)
-        style.configure('Tooltip.TLabel',
-                       background=self.style.TEXT,
-                       foreground=self.style.BACKGROUND,
-                       font=self.style.TOOLTIP_FONT)
-        
         current_highlight = None
+        current_glow = None
         
         def on_motion(event):
-            """Handle mouse motion events (Requirements: 7.2)"""
-            nonlocal current_highlight
+            nonlocal current_highlight, current_glow
             
-            # Safety check - ensure data exists
             if not self.data:
                 return
             
@@ -315,12 +370,10 @@ class BarChart(Chart):
                 bar_index = int((x - self.padding) / bar_spacing)
                 
                 if 0 <= bar_index < len(self.data):
-                    # Calculate bar position
                     bar_x = self._data_to_pixel_x(bar_index, -0.5, len(self.data) - 0.5)
                     bar_width = bar_spacing * self.bar_width_factor
                     value = self.data[bar_index]
                     
-                    # Calculate y_max safely (handle edge cases)
                     max_val = max(self.data) if self.data else 1
                     if max_val == 0:
                         max_val = 1
@@ -329,29 +382,34 @@ class BarChart(Chart):
                     y_top = self._data_to_pixel_y(value, 0, y_max_display)
                     y_base = self._data_to_pixel_y(0, 0, y_max_display)
                     
-                    # Remove previous highlight
                     if current_highlight:
                         try:
                             self.canvas.delete(current_highlight)
                         except tk.TclError:
                             pass
                     
-                    # Create highlight effect
-                    try:
-                        highlight = self.canvas.create_rectangle(
-                            bar_x - bar_width/2 - 2,
-                            y_top - 2,
-                            bar_x + bar_width/2 + 2,
-                            y_base + 2,
-                            outline=self.style.ACCENT,
-                            width=2,
-                            tags=('highlight',)
-                        )
-                        current_highlight = highlight
-                    except tk.TclError:
-                        current_highlight = None
+                    if current_glow:
+                        try:
+                            self.canvas.delete(current_glow)
+                        except tk.TclError:
+                            pass
                     
-                    # Update tooltip - format value appropriately
+                    try:
+                        glow = self.canvas.create_rectangle(
+                            bar_x - bar_width/2 - 4,
+                            y_top - 4,
+                            bar_x + bar_width/2 + 4,
+                            y_base + 4,
+                            fill="",
+                            outline=self.style.HIGHLIGHT_GLOW,
+                            width=3,
+                            stipple="gray12",
+                            tags=('glow',)
+                        )
+                        current_glow = glow
+                    except tk.TclError:
+                        current_glow = None
+                    
                     if value == 0:
                         value_text = "0"
                     elif value == int(value):
@@ -359,13 +417,10 @@ class BarChart(Chart):
                     else:
                         value_text = f"{value:,.2f}"
                     
-                    try:
-                        label.config(text=f"{self.labels[bar_index]}\nValue: {value_text}")
-                        tooltip.wm_geometry(f"+{event.x_root+10}+{event.y_root-40}")
-                        tooltip.deiconify()
-                        tooltip.lift()
-                    except tk.TclError:
-                        pass  # Tooltip may have been destroyed
+                    self.show_tooltip(
+                        event.x_root, event.y_root,
+                        f"{self.labels[bar_index]}\nValue: {value_text}"
+                    )
                 else:
                     if current_highlight:
                         try:
@@ -373,26 +428,44 @@ class BarChart(Chart):
                         except tk.TclError:
                             pass
                         current_highlight = None
+                    if current_glow:
+                        try:
+                            self.canvas.delete(current_glow)
+                        except tk.TclError:
+                            pass
+                        current_glow = None
+                    self.hide_tooltip()
+            else:
+                if current_highlight:
                     try:
-                        tooltip.withdraw()
+                        self.canvas.delete(current_highlight)
                     except tk.TclError:
                         pass
+                    current_highlight = None
+                if current_glow:
+                    try:
+                        self.canvas.delete(current_glow)
+                    except tk.TclError:
+                        pass
+                    current_glow = None
+                self.hide_tooltip()
         
         def on_leave(event):
-            """Handle mouse leave events"""
-            nonlocal current_highlight
+            nonlocal current_highlight, current_glow
             if current_highlight:
                 try:
                     self.canvas.delete(current_highlight)
                 except tk.TclError:
                     pass
                 current_highlight = None
-            try:
-                tooltip.withdraw()
-            except tk.TclError:
-                pass
+            if current_glow:
+                try:
+                    self.canvas.delete(current_glow)
+                except tk.TclError:
+                    pass
+                current_glow = None
+            self.hide_tooltip()
         
-        # Bind events and register with resource manager (Requirements: 3.5)
         motion_id = self.canvas.bind('<Motion>', on_motion)
         leave_id = self.canvas.bind('<Leave>', on_leave)
         self.resource_manager.register_binding(self.canvas, '<Motion>', motion_id)

@@ -552,12 +552,14 @@ class DataValidator:
 
         Raises:
             TypeError: If theme is not a string
-            ValueError: If theme is not 'light' or 'dark'
+            ValueError: If theme is not a valid theme name
         """
+        valid_themes = ('light', 'dark', 'corporate', 'pastel', 'monochrome', 'ocean', 'sunset', 'forest')
+
         if theme is None:
             raise TypeError(
                 "[ChartForgeTK] Error: theme cannot be None. "
-                "Please provide 'light' or 'dark'."
+                f"Please provide one of {valid_themes}."
             )
 
         if not isinstance(theme, str):
@@ -568,9 +570,9 @@ class DataValidator:
 
         theme = theme.strip().lower()
 
-        if theme not in ('light', 'dark'):
+        if theme not in valid_themes:
             raise ValueError(
-                f"[ChartForgeTK] Error: theme must be 'light' or 'dark', "
+                f"[ChartForgeTK] Error: theme must be one of {valid_themes}, "
                 f"got '{theme}'."
             )
 

@@ -39,8 +39,8 @@ Example:
     >>> root.mainloop()
 """
 
-# Core chart base class
-from .core import Chart
+# Core chart base class and styling
+from .core import Chart, ChartStyle, ChartRenderer
 
 # Chart types
 from .network import NetworkGraph
@@ -70,6 +70,8 @@ __license__ = "Apache-2.0"
 __all__ = [
     # Core
     'Chart',
+    'ChartStyle',
+    'ChartRenderer',
     
     # Chart types
     'LineChart',

@@ -22,8 +22,8 @@ class LineChart(Chart):
     """
     
     def __init__(self, parent=None, width: int = 800, height: int = 600, display_mode='frame', 
-                 theme='light', use_container_width_height: bool = False, show_point_labels: bool = True):
-        super().__init__(parent, width=width, height=height, display_mode=display_mode, theme=theme)
+                 theme='light', palette='modern', use_container_width_height: bool = False, show_point_labels: bool = True):
+        super().__init__(parent, width=width, height=height, display_mode=display_mode, theme=theme, palette=palette)
         self.datasets = []
         self.points = {}  # Now stores (x_pixel, y_pixel, data_index) tuples
         self.line_width = 1
@@ -547,45 +547,13 @@ class LineChart(Chart):
         
         Requirements: 3.1, 3.5, 7.1, 7.2, 7.6
         """
-        # Create tooltip window
-        tooltip = tk.Toplevel()
-        tooltip.withdraw()
-        tooltip.overrideredirect(True)
-        try:
-            tooltip.attributes('-topmost', True)
-        except tk.TclError:
-            pass  # Some platforms may not support this
-        
-        # Register tooltip with resource manager (Requirements: 3.1, 7.6)
-        self.resource_manager.register_tooltip(tooltip)
-        self._tooltip = tooltip
-        
-        tooltip_frame = ttk.Frame(tooltip, style='Tooltip.TFrame')
-        tooltip_frame.pack(fill='both', expand=True)
-        label = ttk.Label(tooltip_frame, 
-                         style='Tooltip.TLabel',
-                         font=self.style.TOOLTIP_FONT)
-        label.pack(padx=8, pady=4)
-        
-        style = ttk.Style()
-        style.configure('Tooltip.TFrame', 
-                       background=self.style.TEXT,
-                       relief='solid',
-                       borderwidth=0)
-        style.configure('Tooltip.TLabel',
-                       background=self.style.TEXT,
-                       foreground=self.style.BACKGROUND,
-                       font=self.style.TOOLTIP_FONT)
-        
         current_highlight = None
         v_bar = None
         h_bar = None
         
         def on_motion(event):
-            """Handle mouse motion events (Requirements: 7.2)"""
             nonlocal current_highlight, v_bar, h_bar
             
-            # Safety check - ensure datasets exist
             if not self.datasets:
                 return
             
@@ -610,9 +578,8 @@ class LineChart(Chart):
                     else:
                         v_bar = self.canvas.create_line(
                             x, self.padding, x, self.height - self.padding,
-                            fill='#808080',
-                            width=1,
-                            dash=(4, 2),
+                            fill=self.style.TICK_COLOR,
+                            width=1, dash=(3, 4),
                             tags=('tracking',)
                         )
                     
@@ -621,13 +588,12 @@ class LineChart(Chart):
                     else:
                         h_bar = self.canvas.create_line(
                             self.padding, y, self.width - self.padding, y,
-                            fill='#808080',
-                            width=1,
-                            dash=(4, 2),
+                            fill=self.style.TICK_COLOR,
+                            width=1, dash=(3, 4),
                             tags=('tracking',)
                         )
                 except tk.TclError:
-                    pass  # Widget may have been destroyed
+                    pass
                 
                 if closest_idx >= 0:
                     px, py, data_idx = self.points[closest_dataset][closest_idx]
@@ -636,31 +602,32 @@ class LineChart(Chart):
                         if current_highlight:
                             self.canvas.delete(current_highlight)
                         
+                        color = self.datasets[closest_dataset]['color']
                         highlight = self.canvas.create_oval(
-                            px - self.dot_radius * 1.5,
-                            py - self.dot_radius * 1.5,
-                            px + self.dot_radius * 1.5,
-                            py + self.dot_radius * 1.5,
-                            outline=self.datasets[closest_dataset]['color'],
-                            width=2,
+                            px - self.dot_radius - 3,
+                            py - self.dot_radius - 3,
+                            px + self.dot_radius + 3,
+                            py + self.dot_radius + 3,
+                            outline=color,
+                            width=2.5,
                             tags=('highlight',)
                         )
                         current_highlight = highlight
                         
                         value = self.datasets[closest_dataset]['data'][data_idx]
-                        label.config(text=f"Dataset: {self.datasets[closest_dataset]['label']}\n"
-                                    f"Index: {data_idx}\nValue: {value:,.2f}")
-                        tooltip.wm_geometry(f"+{event.x_root+10}+{event.y_root-40}")
-                        tooltip.deiconify()
-                        tooltip.lift()
+                        self.show_tooltip(
+                            event.x_root, event.y_root,
+                            f"Dataset: {self.datasets[closest_dataset]['label']}\n"
+                            f"Index: {data_idx}\nValue: {value:,.2f}"
+                        )
                     except tk.TclError:
-                        pass  # Widget may have been destroyed
+                        pass
                 else:
                     try:
                         if current_highlight:
                             self.canvas.delete(current_highlight)
                             current_highlight = None
-                        tooltip.withdraw()
+                        self.hide_tooltip()
                     except tk.TclError:
                         pass
             else:
@@ -674,12 +641,11 @@ class LineChart(Chart):
                     if current_highlight:
                         self.canvas.delete(current_highlight)
                         current_highlight = None
-                    tooltip.withdraw()
+                    self.hide_tooltip()
                 except tk.TclError:
                     pass
         
         def on_leave(event):
-            """Handle mouse leave events"""
             nonlocal current_highlight, v_bar, h_bar
             try:
                 if current_highlight:
@@ -691,13 +657,11 @@ class LineChart(Chart):
                 if h_bar:
                     self.canvas.delete(h_bar)
                     h_bar = None
-                tooltip.withdraw()
+                self.hide_tooltip()
             except tk.TclError:
                 pass
 
         def on_mouse_wheel(event):
-            """Handle mouse wheel events for zooming (Requirements: 7.4)"""
-            # Safety check - ensure datasets exist
             if not self.datasets:
                 return
             
@@ -709,7 +673,6 @@ class LineChart(Chart):
                 if new_zoom != self.zoom_level:
                     all_data = [x for ds in self.datasets for x in ds['data']]
                     
-                    # Handle edge case: single data point
                     max_dataset_length = max(len(ds['data']) for ds in self.datasets)
                     if max_dataset_length == 1:
                         full_x_min, full_x_max = -0.5, 0.5
@@ -718,7 +681,6 @@ class LineChart(Chart):
                     
                     full_y_min, full_y_max = min(all_data), max(all_data)
                     
-                    # Handle identical values
                     if full_y_min == full_y_max:
                         if full_y_min == 0:
                             full_y_min, full_y_max = -1, 1
@@ -746,7 +708,6 @@ class LineChart(Chart):
                     self.zoom_center_y = data_y
                     self.plot(self.datasets)
 
-        # Bind events and register with resource manager (Requirements: 3.5)
         motion_id = self.canvas.bind('<Motion>', on_motion)
         leave_id = self.canvas.bind('<Leave>', on_leave)
         wheel_id = self.canvas.bind('<MouseWheel>', on_mouse_wheel)
@@ -755,7 +716,6 @@ class LineChart(Chart):
         self.resource_manager.register_binding(self.canvas, '<Leave>', leave_id)
         self.resource_manager.register_binding(self.canvas, '<MouseWheel>', wheel_id)
         
-        # Linux scroll wheel support
         button4_id = self.canvas.bind('<Button-4>', lambda e: on_mouse_wheel(type('Event', (), {'delta': 120, 'x': e.x, 'y': e.y})()))
         button5_id = self.canvas.bind('<Button-5>', lambda e: on_mouse_wheel(type('Event', (), {'delta': -120, 'x': e.x, 'y': e.y})()))
         

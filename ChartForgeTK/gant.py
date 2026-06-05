@@ -33,8 +33,8 @@ class GanttChart(Chart):
     """
     
     def __init__(self, parent=None, width: int = 400, height: int = 400, 
-                 display_mode='frame', theme='light', max_bar_height=30, min_bar_height=15):
-        super().__init__(parent, width=width, height=height, display_mode=display_mode, theme=theme)
+                 display_mode='frame', theme='light', palette='modern', max_bar_height=30, min_bar_height=15):
+        super().__init__(parent, width=width, height=height, display_mode=display_mode, theme=theme, palette=palette)
         self.data = []
         self.dependencies = []
         self.milestones = []

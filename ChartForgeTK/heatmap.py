@@ -32,8 +32,8 @@ class HeatMap(Chart):
     Requirements: 1.1, 1.2, 1.3, 2.1, 2.2, 3.1, 3.2, 3.6, 9.1, 9.2
     """
     
-    def __init__(self, parent=None, width: int = 800, height: int = 600, display_mode='frame', theme='light'):
-        super().__init__(parent, width=width, height=height, display_mode=display_mode, theme=theme)
+    def __init__(self, parent=None, width: int = 800, height: int = 600, display_mode='frame', theme='light', palette='modern'):
+        super().__init__(parent, width=width, height=height, display_mode=display_mode, theme=theme, palette=palette)
         self.cell_padding = 2
         self.interactive_cells = {}
         self._hover_tag = None

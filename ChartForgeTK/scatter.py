@@ -38,8 +38,8 @@ class ScatterPlot(Chart):
     Requirements: 1.1, 1.2, 1.3, 2.1, 2.2, 2.3, 3.1, 3.2, 3.6, 9.1, 9.2
     """
     
-    def __init__(self, parent=None, width: int = 800, height: int = 600, display_mode='frame', theme='light'):
-        super().__init__(parent, width=width, height=height, display_mode=display_mode, theme=theme)
+    def __init__(self, parent=None, width: int = 800, height: int = 600, display_mode='frame', theme='light', palette='modern'):
+        super().__init__(parent, width=width, height=height, display_mode=display_mode, theme=theme, palette=palette)
         self.data = []  # List of (x, y) tuples
         self.point_radius = 5
         self.animation_duration = 500
@@ -409,43 +409,11 @@ class ScatterPlot(Chart):
         
         Requirements: 3.1, 3.5, 7.1, 7.2, 7.6
         """
-        # Create tooltip window
-        tooltip = tk.Toplevel()
-        tooltip.withdraw()
-        tooltip.overrideredirect(True)
-        try:
-            tooltip.attributes('-topmost', True)
-        except tk.TclError:
-            pass  # Some platforms may not support this
-        
-        # Register tooltip with resource manager (Requirements: 3.1, 7.6)
-        self.resource_manager.register_tooltip(tooltip)
-        self._tooltip = tooltip
-        
-        tooltip_frame = ttk.Frame(tooltip, style='Tooltip.TFrame')
-        tooltip_frame.pack(fill='both', expand=True)
-        label = ttk.Label(tooltip_frame,
-                         style='Tooltip.TLabel',
-                         font=self.style.TOOLTIP_FONT)
-        label.pack(padx=8, pady=4)
-        
-        style = ttk.Style()
-        style.configure('Tooltip.TFrame',
-                       background=self.style.TEXT,
-                       relief='solid',
-                       borderwidth=0)
-        style.configure('Tooltip.TLabel',
-                       background=self.style.TEXT,
-                       foreground=self.style.BACKGROUND,
-                       font=self.style.TOOLTIP_FONT)
-        
         current_highlight = None
         
         def on_motion(event):
-            """Handle mouse motion events (Requirements: 7.2)"""
             nonlocal current_highlight
             
-            # Safety check - ensure data exists
             if not self.data:
                 return
             
@@ -455,7 +423,6 @@ class ScatterPlot(Chart):
                 closest_idx = -1
                 min_dist = float('inf')
                 
-                # Use stored instance variables for coordinate conversion
                 for i, (dx, dy) in enumerate(self.data):
                     px = self._data_to_pixel_x(dx, self.x_min, self.x_max)
                     py = self._data_to_pixel_y(dy, self.y_min, self.y_max)
@@ -472,45 +439,44 @@ class ScatterPlot(Chart):
                         if current_highlight:
                             self.canvas.delete(current_highlight)
                         
+                        color = self.style.get_color(closest_idx)
                         highlight = self.canvas.create_oval(
-                            px - self.point_radius * 1.5,
-                            py - self.point_radius * 1.5,
-                            px + self.point_radius * 1.5,
-                            py + self.point_radius * 1.5,
-                            outline=self.style.ACCENT,
-                            width=2,
+                            px - self.point_radius - 4,
+                            py - self.point_radius - 4,
+                            px + self.point_radius + 4,
+                            py + self.point_radius + 4,
+                            outline=color,
+                            width=2.5,
                             tags=('highlight',)
                         )
                         current_highlight = highlight
                         
                         x_val, y_val = self.data[closest_idx]
-                        label.config(text=f"X: {x_val:.1f}\nY: {y_val:.1f}")
-                        tooltip.wm_geometry(f"+{event.x_root+10}+{event.y_root-40}")
-                        tooltip.deiconify()
-                        tooltip.lift()
+                        self.show_tooltip(
+                            event.x_root, event.y_root,
+                            f"X: {x_val:.2f}\nY: {y_val:.2f}"
+                        )
                     except tk.TclError:
-                        pass  # Widget may have been destroyed
+                        pass
                 else:
                     try:
                         if current_highlight:
                             self.canvas.delete(current_highlight)
                             current_highlight = None
-                        tooltip.withdraw()
+                        self.hide_tooltip()
                     except tk.TclError:
                         pass
         
         def on_leave(event):
-            """Handle mouse leave events"""
             nonlocal current_highlight
             try:
                 if current_highlight:
                     self.canvas.delete(current_highlight)
                     current_highlight = None
-                tooltip.withdraw()
+                self.hide_tooltip()
             except tk.TclError:
                 pass
         
-        # Bind events and register with resource manager (Requirements: 3.5)
         motion_id = self.canvas.bind('<Motion>', on_motion)
         leave_id = self.canvas.bind('<Leave>', on_leave)
         self.resource_manager.register_binding(self.canvas, '<Motion>', motion_id)

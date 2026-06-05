@@ -78,29 +78,26 @@ class TooltipManager:
         Requirements: 4.2
         """
         try:
-            # Create tooltip window
             self._tooltip = tk.Toplevel()
             self._tooltip.withdraw()
             self._tooltip.overrideredirect(True)
             
-            # Try to set topmost attribute (may not be supported on all platforms)
             try:
                 self._tooltip.attributes('-topmost', True)
             except tk.TclError:
                 logger.debug("Platform does not support -topmost attribute for tooltips")
             
-            # Create tooltip frame and label
-            from tkinter import ttk
-            
-            # Configure styles
             style = ttk.Style()
+            bg = self._chart.style.TOOLTIP_BG
+            fg = self._chart.style.TOOLTIP_TEXT
+            
             style.configure('Tooltip.TFrame',
-                           background=self._chart.style.TEXT,
+                           background=bg,
                            relief='solid',
                            borderwidth=0)
             style.configure('Tooltip.TLabel',
-                           background=self._chart.style.TEXT,
-                           foreground=self._chart.style.BACKGROUND,
+                           background=bg,
+                           foreground=fg,
                            font=self._chart.style.TOOLTIP_FONT)
             
             self._tooltip_frame = ttk.Frame(self._tooltip, style='Tooltip.TFrame')
@@ -111,9 +108,8 @@ class TooltipManager:
                 style='Tooltip.TLabel',
                 font=self._chart.style.TOOLTIP_FONT
             )
-            self._tooltip_label.pack(padx=8, pady=4)
+            self._tooltip_label.pack(padx=10, pady=6)
             
-            # Register with resource manager for cleanup (Requirements: 3.1, 7.6)
             if hasattr(self._chart, 'resource_manager') and self._chart.resource_manager:
                 self._chart.resource_manager.register_tooltip(self._tooltip)
             
@@ -143,7 +139,7 @@ class TooltipManager:
         self._tooltip_frame = None
     
     def show(self, x_root: int, y_root: int, text: str, 
-             offset_x: int = 10, offset_y: int = -40) -> bool:
+             offset_x: int = 12, offset_y: int = -45) -> bool:
         """
         Show the tooltip at the specified position with the given text.
         
@@ -167,11 +163,9 @@ class TooltipManager:
             return False
         
         try:
-            # Update tooltip text
             if self._tooltip_label:
                 self._tooltip_label.config(text=text)
             
-            # Position and show tooltip
             tooltip.wm_geometry(f"+{x_root + offset_x}+{y_root + offset_y}")
             tooltip.deiconify()
             tooltip.lift()
@@ -242,7 +236,6 @@ class TooltipManager:
         
         if self._tooltip is not None:
             try:
-                # Unregister from resource manager first
                 if hasattr(self._chart, 'resource_manager') and self._chart.resource_manager:
                     self._chart.resource_manager.unregister_tooltip(self._tooltip)
                 
@@ -275,132 +268,334 @@ class TooltipManager:
         )
 
 class ChartStyle:
-    def __init__(self, theme='light'):
+    THEMES = {
+        'light': {
+            'BACKGROUND': "#FFFFFF",
+            'TEXT': "#1E293B",
+            'TEXT_SECONDARY': "#64748B",
+            'PRIMARY': "#2563EB",
+            'ACCENT': "#FACC15",
+            'AXIS_COLOR': "#94A3B8",
+            'GRID_COLOR': "#E2E8F0",
+            'TICK_COLOR': "#64748B",
+            'SECONDARY': "#38BDF8",
+            'ACCENT_HOVER': "#FB923C",
+            'TOOLTIP_BG': "#1E293B",
+            'TOOLTIP_TEXT': "#FFFFFF",
+            'HIGHLIGHT_GLOW': "#2563EB",
+        },
+        'dark': {
+            'BACKGROUND': "#0F172A",
+            'TEXT': "#E2E8F0",
+            'TEXT_SECONDARY': "#94A3B8",
+            'PRIMARY': "#3B82F6",
+            'ACCENT': "#EAB308",
+            'AXIS_COLOR': "#475569",
+            'GRID_COLOR': "#1E293B",
+            'TICK_COLOR': "#94A3B8",
+            'SECONDARY': "#22D3EE",
+            'ACCENT_HOVER': "#F87171",
+            'TOOLTIP_BG': "#E2E8F0",
+            'TOOLTIP_TEXT': "#0F172A",
+            'HIGHLIGHT_GLOW': "#3B82F6",
+        },
+        'corporate': {
+            'BACKGROUND': "#F8FAFC",
+            'TEXT': "#0F172A",
+            'TEXT_SECONDARY': "#475569",
+            'PRIMARY': "#1E40AF",
+            'ACCENT': "#059669",
+            'AXIS_COLOR': "#CBD5E1",
+            'GRID_COLOR': "#F1F5F9",
+            'TICK_COLOR': "#64748B",
+            'SECONDARY': "#0D9488",
+            'ACCENT_HOVER': "#DC2626",
+            'TOOLTIP_BG': "#0F172A",
+            'TOOLTIP_TEXT': "#F8FAFC",
+            'HIGHLIGHT_GLOW': "#1E40AF",
+        },
+        'pastel': {
+            'BACKGROUND': "#FDF2F8",
+            'TEXT': "#4A1942",
+            'TEXT_SECONDARY': "#9D5C8D",
+            'PRIMARY': "#A78BFA",
+            'ACCENT': "#F9A8D4",
+            'AXIS_COLOR': "#E5D5E0",
+            'GRID_COLOR': "#F3E8F0",
+            'TICK_COLOR': "#9D5C8D",
+            'SECONDARY': "#67E8F9",
+            'ACCENT_HOVER': "#FDBA74",
+            'TOOLTIP_BG': "#4A1942",
+            'TOOLTIP_TEXT': "#FDF2F8",
+            'HIGHLIGHT_GLOW': "#A78BFA",
+        },
+        'monochrome': {
+            'BACKGROUND': "#FFFFFF",
+            'TEXT': "#111111",
+            'TEXT_SECONDARY': "#666666",
+            'PRIMARY': "#333333",
+            'ACCENT': "#000000",
+            'AXIS_COLOR': "#CCCCCC",
+            'GRID_COLOR': "#E8E8E8",
+            'TICK_COLOR': "#888888",
+            'SECONDARY': "#555555",
+            'ACCENT_HOVER': "#999999",
+            'TOOLTIP_BG': "#111111",
+            'TOOLTIP_TEXT': "#FFFFFF",
+            'HIGHLIGHT_GLOW': "#333333",
+        },
+        'ocean': {
+            'BACKGROUND': "#ECFEFF",
+            'TEXT': "#164E63",
+            'TEXT_SECONDARY': "#0E7490",
+            'PRIMARY': "#0891B2",
+            'ACCENT': "#2DD4BF",
+            'AXIS_COLOR': "#A5F3FC",
+            'GRID_COLOR': "#CFFAFE",
+            'TICK_COLOR': "#0E7490",
+            'SECONDARY': "#06B6D4",
+            'ACCENT_HOVER': "#F59E0B",
+            'TOOLTIP_BG': "#164E63",
+            'TOOLTIP_TEXT': "#ECFEFF",
+            'HIGHLIGHT_GLOW': "#0891B2",
+        },
+        'sunset': {
+            'BACKGROUND': "#FFFBEB",
+            'TEXT': "#7C2D12",
+            'TEXT_SECONDARY': "#B45309",
+            'PRIMARY': "#EA580C",
+            'ACCENT': "#FBBF24",
+            'AXIS_COLOR': "#FDE68A",
+            'GRID_COLOR': "#FEF3C7",
+            'TICK_COLOR': "#B45309",
+            'SECONDARY': "#EC4899",
+            'ACCENT_HOVER': "#EF4444",
+            'TOOLTIP_BG': "#7C2D12",
+            'TOOLTIP_TEXT': "#FFFBEB",
+            'HIGHLIGHT_GLOW': "#EA580C",
+        },
+        'forest': {
+            'BACKGROUND': "#F0FDF4",
+            'TEXT': "#14532D",
+            'TEXT_SECONDARY': "#166534",
+            'PRIMARY': "#16A34A",
+            'ACCENT': "#4ADE80",
+            'AXIS_COLOR': "#BBF7D0",
+            'GRID_COLOR': "#DCFCE7",
+            'TICK_COLOR': "#166534",
+            'SECONDARY': "#15803D",
+            'ACCENT_HOVER': "#EAB308",
+            'TOOLTIP_BG': "#14532D",
+            'TOOLTIP_TEXT': "#F0FDF4",
+            'HIGHLIGHT_GLOW': "#16A34A",
+        },
+    }
+
+    PALETTES = {
+        'modern': [
+            "#2563EB", "#FACC15", "#F43F5E", "#10B981", "#8B5CF6",
+            "#FB923C", "#06B6D4", "#EC4899", "#84CC16", "#6366F1",
+        ],
+        'corporate': [
+            "#1E40AF", "#047857", "#B91C1C", "#7C3AED", "#B45309",
+            "#0F766E", "#831843", "#1E3A5F", "#4A5568", "#2D3748",
+        ],
+        'pastel': [
+            "#A78BFA", "#F9A8D4", "#67E8F9", "#FDBA74", "#86EFAC",
+            "#FDE047", "#C4B5FD", "#FDA4AF", "#A7F3D0", "#FCD34D",
+        ],
+        'vibrant': [
+            "#FF006E", "#8338EC", "#3A86FF", "#06D6A0", "#FFBE0B",
+            "#FB5607", "#FF006E", "#7209B7", "#4CC9F0", "#F72585",
+        ],
+        'monochrome': [
+            "#1a1a1a", "#333333", "#4d4d4d", "#666666", "#808080",
+            "#999999", "#b3b3b3", "#cccccc", "#e6e6e6", "#f2f2f2",
+        ],
+        'ocean': [
+            "#08306B", "#08519C", "#2171B5", "#4292C6", "#6BAED6",
+            "#9ECAE1", "#C6DBEF", "#DEEBF7", "#F7FBFF", "#045a8d",
+        ],
+        'sunset': [
+            "#7C2D12", "#9A3412", "#C2410C", "#EA580C", "#F97316",
+            "#FB923C", "#FDBA74", "#FED7AA", "#FFEDD5", "#431407",
+        ],
+        'forest': [
+            "#14532D", "#166534", "#15803D", "#16A34A", "#22C55E",
+            "#4ADE80", "#86EFAC", "#BBF7D0", "#DCFCE7", "#052E16",
+        ],
+    }
+
+    def __init__(self, theme='light', palette='modern'):
         self.theme = theme
-        if theme == 'light':
-            self.BACKGROUND = "#FFFFFF"  # Clean, crisp white
-            self.TEXT = "#1E293B"        # Deep slate gray for strong contrast
-            self.TEXT_SECONDARY = "#64748B"  # Soft gray-blue for secondary text
-            self.PRIMARY = "#2563EB"     # Bold modern blue
-            self.ACCENT = "#FACC15"      # Bright yellow-gold for highlights
-            self.AXIS_COLOR = "#94A3B8"  # Muted blue-gray for axes
-            self.GRID_COLOR = "#E2E8F0"  # Soft light gray for subtle grids
-            self.TICK_COLOR = "#64748B"  # Subtle gray-blue for ticks
-            self.SECONDARY = "#38BDF8"   # Fresh cyan-blue for contrast
-            self.ACCENT_HOVER = "#FB923C"  # Soft orange for interactive elements
-            
-        else:  # dark
-            self.BACKGROUND = "#0F172A"  # Deep navy for a sleek dark theme
-            self.TEXT = "#E2E8F0"        # Light gray for text clarity
-            self.TEXT_SECONDARY = "#94A3B8"  # Muted blue-gray for balance
-            self.PRIMARY = "#3B82F6"     # Bright blue with a modern touch
-            self.ACCENT = "#EAB308"      # Neon gold for highlights
-            self.AXIS_COLOR = "#475569"  # Darker gray-blue for soft contrast
-            self.GRID_COLOR = "#334155"  # Dark gray-blue for subtle grid lines
-            self.TICK_COLOR = "#94A3B8"  # Muted blue-gray for balance
-            self.SECONDARY = "#22D3EE"   # Vibrant cyan for secondary elements
-            self.ACCENT_HOVER = "#F87171"  # Coral red for hover interactions
-        
+        self.palette_name = palette
+        self._load_theme(theme)
+        self._load_palette(palette)
+
+    def _load_theme(self, theme):
+        theme_data = self.THEMES.get(theme, self.THEMES['light'])
+        for key, value in theme_data.items():
+            setattr(self, key, value)
+
         self.PADDING = 50
-        self.AXIS_WIDTH = 2
+        self.AXIS_WIDTH = 1.5
         self.GRID_WIDTH = 1
-        self.TICK_LENGTH = 5
+        self.TICK_LENGTH = 6
         self.TITLE_FONT = ("Helvetica", 14, "bold")
         self.LABEL_FONT = ("Helvetica", 10)
-        self.AXIS_FONT = ("Helvetica", 10)
-        self.VALUE_FONT = ("Helvetica", 12)
+        self.AXIS_FONT = ("Helvetica", 9)
+        self.VALUE_FONT = ("Helvetica", 11)
         self.TOOLTIP_FONT = ("Helvetica", 10)
-        self.TOOLTIP_PADDING = 5
+        self.TOOLTIP_PADDING = 8
+
+    def _load_palette(self, palette):
+        self._palette = self.PALETTES.get(palette, self.PALETTES['modern'])
+
+    def set_theme(self, theme):
+        self.theme = theme
+        self._load_theme(theme)
+
+    def set_palette(self, palette):
+        self.palette_name = palette
+        self._load_palette(palette)
+
+    def get_color(self, index):
+        return self._palette[index % len(self._palette)]
 
     def get_gradient_color(self, index, total):
-        # Updated modern gradient with bold yet refined colors
-        colors = [
-            "#2563EB",  # Deep blue
-            "#FACC15",  # Vivid gold
-            "#F43F5E",  # Bold pinkish red
-            "#10B981",  # Bright green
-            "#8B5CF6",  # Elegant violet
-        ]
-        return colors[index % len(colors)]
+        return self.get_color(index)
 
     def get_histogram_color(self, index, total):
-        # Modernized, vibrant but deep blue
-        colors = ["#2563EB"]  
-        return colors[index % len(colors)]
+        return self._palette[0] if self._palette else "#2563EB"
 
-    def create_shadow(self, color):
-        return self.adjust_brightness(color, 0.7)
+    def create_shadow(self, color, factor=0.6):
+        return self.adjust_brightness(color, factor)
+
+    def create_lighter(self, color, factor=1.3):
+        return self.adjust_brightness(color, factor)
 
     def adjust_brightness(self, color, factor):
-        """
-        Adjust the brightness of a color by a factor.
-        
-        This method includes error handling for invalid colors, falling back
-        to a default color if parsing fails.
-        
-        Args:
-            color: Hex color string (#RRGGBB or #RGB)
-            factor: Brightness factor (0.0 to 2.0, where 1.0 is unchanged)
-            
-        Returns:
-            str: Adjusted hex color string
-            
-        Requirements: 4.3, 8.2
-        """
         try:
-            # Parse the color
             rgb = DataValidator.parse_hex_color(color)
             if rgb is None:
-                # Try to validate and normalize the color first
                 try:
                     color = DataValidator.validate_color(color)
                     rgb = DataValidator.parse_hex_color(color)
                 except (TypeError, ValueError):
                     pass
-            
             if rgb is None:
-                # Fall back to default color
-                logger.warning(
-                    f"Failed to parse color '{color}' for brightness adjustment. "
-                    f"Using default color."
-                )
-                rgb = (37, 99, 235)  # Default blue
-            
+                rgb = (37, 99, 235)
             r, g, b = rgb
-            
-            # Apply brightness factor with clamping
             r = DataValidator.clamp_rgb_value(r * factor)
             g = DataValidator.clamp_rgb_value(g * factor)
             b = DataValidator.clamp_rgb_value(b * factor)
-            
             return f"#{r:02x}{g:02x}{b:02x}"
-            
-        except Exception as e:
-            logger.warning(f"Error adjusting brightness: {e}. Using default color.")
-            return DataValidator.DEFAULT_FALLBACK_COLOR
+        except Exception:
+            return "#2563EB"
 
-    def validate_custom_color(self, color: str, default: str = None) -> str:
-        """
-        Validate a custom color with fallback to default.
-        
-        This method provides graceful degradation when custom colors are invalid.
-        
-        Args:
-            color: Color string to validate
-            default: Default color to use if validation fails
-            
-        Returns:
-            str: Validated color or default
-            
-        Requirements: 4.3, 8.2
-        """
+    def validate_custom_color(self, color, default=None):
         if default is None:
             default = self.PRIMARY
         return DataValidator.validate_color_with_fallback(color, default)
 
+    @staticmethod
+    def blend_colors(color1, color2, ratio=0.5):
+        c1 = DataValidator.parse_hex_color(color1) or (0, 0, 0)
+        c2 = DataValidator.parse_hex_color(color2) or (0, 0, 0)
+        r = int(c1[0] + (c2[0] - c1[0]) * ratio)
+        g = int(c1[1] + (c2[1] - c1[1]) * ratio)
+        b = int(c1[2] + (c2[2] - c1[2]) * ratio)
+        return f"#{r:02x}{g:02x}{b:02x}"
+
+    @staticmethod
+    def hex_to_rgb(hex_color):
+        hex_color = hex_color.lstrip('#')
+        if len(hex_color) == 3:
+            hex_color = ''.join(c * 2 for c in hex_color)
+        return tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4))
+
+
+class ChartRenderer:
+    @staticmethod
+    def create_rounded_rect(canvas, x1, y1, x2, y2, radius=8, **kwargs):
+        points = [
+            x1 + radius, y1,
+            x2 - radius, y1,
+            x2, y1,
+            x2, y1 + radius,
+            x2, y2 - radius,
+            x2, y2,
+            x2 - radius, y2,
+            x1 + radius, y2,
+            x1, y2,
+            x1, y2 - radius,
+            x1, y1 + radius,
+            x1, y1,
+        ]
+        return canvas.create_polygon(points, smooth=True, **kwargs)
+
+    @staticmethod
+    def create_drop_shadow(canvas, x1, y1, x2, y2, offset=4, blur=3, color="#000000", alpha=0.15):
+        shadow_items = []
+        for i in range(blur):
+            alpha_step = alpha / blur
+            gray = int(255 * (1 - alpha_step * (blur - i)))
+            shadow_color = f"#{gray:02x}{gray:02x}{gray:02x}"
+            shadow_items.append(
+                canvas.create_rectangle(
+                    x1 + offset + i, y1 + offset + i,
+                    x2 + offset + i, y2 + offset + i,
+                    fill=shadow_color, outline="", tags=('shadow',)
+                )
+            )
+        return shadow_items
+
+    @staticmethod
+    def create_bar_gradient(canvas, x1, y1, x2, y2, color, steps=20):
+        items = []
+        step_height = (y2 - y1) / steps
+        for i in range(steps):
+            ratio = i / steps
+            r, g, b = ChartStyle.hex_to_rgb(color)
+            factor = 0.85 + 0.15 * (1 - ratio)
+            r = min(255, int(r * factor))
+            g = min(255, int(g * factor))
+            b = min(255, int(b * factor))
+            grad_color = f"#{r:02x}{g:02x}{b:02x}"
+            items.append(
+                canvas.create_rectangle(
+                    x1, y1 + i * step_height,
+                    x2, y1 + (i + 1) * step_height + 1,
+                    fill=grad_color, outline="", tags=('gradient',)
+                )
+            )
+        return items
+
+    @staticmethod
+    def create_tooltip_bg(canvas, x, y, width, height, color, radius=8):
+        return ChartRenderer.create_rounded_rect(
+            canvas, x, y, x + width, y + height,
+            radius=radius, fill=color, outline=color, tags=('tooltip_bg',)
+        )
+
+    @staticmethod
+    def create_glow_effect(canvas, x1, y1, x2, y2, color, width=4, steps=3):
+        items = []
+        for i in range(steps):
+            alpha = 1.0 - (i / steps)
+            items.append(
+                canvas.create_rectangle(
+                    x1 - width * alpha, y1 - width * alpha,
+                    x2 + width * alpha, y2 + width * alpha,
+                    outline=color, width=width * alpha * 0.5,
+                    fill="", tags=('glow',)
+                )
+            )
+        return items
+
 
 class Chart(tk.Frame):
-    def __init__(self, parent=None, width: int = 400, height: int = 400, display_mode='frame', theme='light'):
+    def __init__(self, parent=None, width: int = 400, height: int = 400, display_mode='frame', theme='light', palette='modern'):
         """Initialize chart with modern styling and enhanced features.
         
         Args:
@@ -408,7 +603,8 @@ class Chart(tk.Frame):
             width: Chart width in pixels (minimum 100)
             height: Chart height in pixels (minimum 100)
             display_mode: Either 'frame' (embedded) or 'window' (standalone)
-            theme: Either 'light' or 'dark'
+            theme: Color theme ('light', 'dark', 'corporate', 'pastel', 'monochrome', 'ocean', 'sunset', 'forest')
+            palette: Color palette ('modern', 'corporate', 'pastel', 'vibrant', 'monochrome', 'ocean', 'sunset', 'forest')
             
         Raises:
             TypeError: If parameters have incorrect types
@@ -421,8 +617,10 @@ class Chart(tk.Frame):
         theme = DataValidator.validate_theme(theme)
         display_mode = DataValidator.validate_display_mode(display_mode)
 
-        self.style = ChartStyle(theme=theme)  # Pass theme to ChartStyle
+        self.style = ChartStyle(theme=theme, palette=palette)
         self.theme = theme
+        self.palette = palette
+        self.renderer = ChartRenderer()
         self.display_mode = display_mode
         self.width = width
         self.height = height
@@ -790,7 +988,7 @@ class Chart(tk.Frame):
             current_data = getattr(self, 'data', None)
             current_labels = getattr(self, 'labels', None)
 
-            new_chart = self.__class__(width=self.width, height=self.height, display_mode='window', theme=self.theme)
+            new_chart = self.__class__(width=self.width, height=self.height, display_mode='window', theme=self.theme, palette=self.palette)
             new_chart.title = self.title
             new_chart.x_label = self.x_label
             new_chart.y_label = self.y_label
@@ -809,7 +1007,7 @@ class Chart(tk.Frame):
             current_labels = getattr(self, 'labels', None)
 
             new_chart = self.__class__(parent=parent, width=self.width, height=self.height, 
-                                      display_mode='frame', theme=self.theme)
+                                      display_mode='frame', theme=self.theme, palette=self.palette)
             new_chart.title = self.title
             new_chart.x_label = self.x_label
             new_chart.y_label = self.y_label
@@ -828,42 +1026,62 @@ class Chart(tk.Frame):
 
         self._draw_grid(x_min, x_max, y_min, y_max)
 
+        plot_left = self.padding
+        plot_right = self.width - self.padding
+        plot_top = self.padding
+        plot_bottom = self.height - self.padding
+
+        # Determine Y-axis baseline
+        y_zero = 0 if y_min <= 0 <= y_max else y_min
+        y_zero_px = self._data_to_pixel_y(y_zero, y_min, y_max)
+
+        # Draw zero-line emphasis if zero is within range
+        if y_min <= 0 <= y_max:
+            self.canvas.create_line(
+                plot_left, y_zero_px, plot_right, y_zero_px,
+                fill=self.style.adjust_brightness(self.style.AXIS_COLOR, 0.7),
+                width=self.style.AXIS_WIDTH + 0.5, capstyle=tk.ROUND
+            )
+        else:
+            # X-axis at bottom
+            self.canvas.create_line(
+                plot_left, plot_bottom, plot_right, plot_bottom,
+                fill=self.style.AXIS_COLOR, width=self.style.AXIS_WIDTH, capstyle=tk.ROUND
+            )
+
         # Y-axis (left edge)
         self.canvas.create_line(
-            self.padding, self.padding,
-            self.padding, self.height - self.padding,
-            fill=self.style.AXIS_COLOR,
-            width=self.style.AXIS_WIDTH,
-            capstyle=tk.ROUND
+            plot_left, plot_top, plot_left, plot_bottom,
+            fill=self.style.AXIS_COLOR, width=self.style.AXIS_WIDTH, capstyle=tk.ROUND
         )
 
-        # X-axis (at y=0 or bottom if no zero)
-        y_zero = 0 if y_min <= 0 <= y_max else y_min
+        # Subtle top and right border lines for frame effect
         self.canvas.create_line(
-            self.padding, self._data_to_pixel_y(y_zero, y_min, y_max),
-            self.width - self.padding, self._data_to_pixel_y(y_zero, y_min, y_max),
-            fill=self.style.AXIS_COLOR,
-            width=self.style.AXIS_WIDTH,
-            capstyle=tk.ROUND
+            plot_left, plot_top, plot_right, plot_top,
+            fill=self.style.GRID_COLOR, width=1
+        )
+        self.canvas.create_line(
+            plot_right, plot_top, plot_right, plot_bottom,
+            fill=self.style.GRID_COLOR, width=1
         )
 
         self._draw_ticks(x_min, x_max, y_min, y_max)
 
         if self.title:
             self.canvas.create_text(
-                self.width / 2, self.padding / 2, text=self.title,
+                self.width / 2, plot_top / 2.5, text=self.title,
                 font=self.style.TITLE_FONT, fill=self.style.TEXT, anchor='center'
             )
 
         if self.x_label:
             self.canvas.create_text(
-                self.width / 2, self.height - self.padding / 3, text=self.x_label,
+                self.width / 2, self.height - self.padding / 4, text=self.x_label,
                 font=self.style.LABEL_FONT, fill=self.style.TEXT_SECONDARY, anchor='center'
             )
 
         if self.y_label:
             self.canvas.create_text(
-                self.padding / 3, self.height / 2, text=self.y_label,
+                plot_left / 3, self.height / 2, text=self.y_label,
                 font=self.style.LABEL_FONT, fill=self.style.TEXT_SECONDARY, anchor='center', angle=90
             )
 
@@ -872,54 +1090,90 @@ class Chart(tk.Frame):
         x_interval = self._calculate_tick_interval(x_max - x_min)
         y_interval = self._calculate_tick_interval(y_max - y_min)
 
+        plot_left = self.padding
+        plot_right = self.width - self.padding
+        plot_top = self.padding
+        plot_bottom = self.height - self.padding
+
+        # Draw horizontal grid lines (subtle)
+        y = math.ceil(y_min / y_interval) * y_interval
+        while y <= y_max:
+            if y == 0:
+                y += y_interval
+                continue
+            py = self._data_to_pixel_y(y, y_min, y_max)
+            if plot_top < py < plot_bottom:
+                self.canvas.create_line(
+                    plot_left, py, plot_right, py,
+                    fill=self.style.GRID_COLOR, width=self.style.GRID_WIDTH, dash=(3, 5)
+                )
+            y += y_interval
+
+        # Draw vertical grid lines (subtle)
         x = math.ceil(x_min / x_interval) * x_interval
         while x <= x_max:
             px = self._data_to_pixel_x(x, x_min, x_max)
-            self.canvas.create_line(px, self.padding, px, self.height - self.padding,
-                                   fill=self.style.GRID_COLOR, width=self.style.GRID_WIDTH, dash=(2, 4))
+            if plot_left < px < plot_right:
+                self.canvas.create_line(
+                    px, plot_top, px, plot_bottom,
+                    fill=self.style.GRID_COLOR, width=self.style.GRID_WIDTH, dash=(3, 5)
+                )
             x += x_interval
-
-        y = math.ceil(y_min / y_interval) * y_interval
-        while y <= y_max:
-            py = self._data_to_pixel_y(y, y_min, y_max)
-            self.canvas.create_line(self.padding, py, self.width - self.padding, py,
-                                   fill=self.style.GRID_COLOR, width=self.style.GRID_WIDTH, dash=(2, 4))
-            y += y_interval
 
     def _draw_ticks(self, x_min: float, x_max: float, y_min: float, y_max: float):
         """Draw axis ticks and labels with modern styling, preventing duplicates."""
         x_interval = self._calculate_tick_interval(x_max - x_min)
         y_interval = self._calculate_tick_interval(y_max - y_min)
 
+        plot_left = self.padding
+        plot_right = self.width - self.padding
+        plot_top = self.padding
+        plot_bottom = self.height - self.padding
+
+        y_zero = 0 if y_min <= 0 <= y_max else y_min
+        y_zero_px = self._data_to_pixel_y(y_zero, y_min, y_max)
+
         # X-axis ticks and labels
         x = math.ceil(x_min / x_interval) * x_interval
-        y_zero = 0 if y_min <= 0 <= y_max else y_min
-        drawn_x_labels = set()  # Track drawn X labels to avoid duplicates
-        while x <= x_max + 1e-10:  # Add small epsilon to handle floating-point edge cases
+        drawn_x_labels = set()
+        while x <= x_max + 1e-10:
             px = self._data_to_pixel_x(x, x_min, x_max)
-            py = self._data_to_pixel_y(y_zero, y_min, y_max)
-            self.canvas.create_line(px, py, px, py + self.style.TICK_LENGTH,
-                                   fill=self.style.TICK_COLOR, width=self.style.AXIS_WIDTH, capstyle=tk.ROUND)
-            label = f"{x:g}"
-            if label not in drawn_x_labels:
-                self.canvas.create_text(px, py + self.style.TICK_LENGTH + 5, text=label,
-                                       font=self.style.AXIS_FONT, fill=self.style.TEXT_SECONDARY, anchor='n')
-                drawn_x_labels.add(label)
+            if plot_left < px < plot_right:
+                self.canvas.create_line(
+                    px, y_zero_px, px, y_zero_px + self.style.TICK_LENGTH,
+                    fill=self.style.TICK_COLOR, width=1, capstyle=tk.ROUND
+                )
+                label = f"{x:g}"
+                if label not in drawn_x_labels:
+                    self.canvas.create_text(
+                        px, y_zero_px + self.style.TICK_LENGTH + 6, text=label,
+                        font=self.style.AXIS_FONT, fill=self.style.TEXT_SECONDARY, anchor='n'
+                    )
+                    drawn_x_labels.add(label)
             x += x_interval
 
         # Y-axis ticks and labels
         y = math.ceil(y_min / y_interval) * y_interval
-        drawn_y_labels = set()  # Track drawn Y labels to avoid duplicates
-        while y <= y_max + 1e-10:  # Add small epsilon to handle floating-point edge cases
-            px = self.padding
+        drawn_y_labels = set()
+        while y <= y_max + 1e-10:
             py = self._data_to_pixel_y(y, y_min, y_max)
-            self.canvas.create_line(px - self.style.TICK_LENGTH, py, px, py,
-                                   fill=self.style.TICK_COLOR, width=self.style.AXIS_WIDTH, capstyle=tk.ROUND)
-            label = f"{y/1000:g}k" if abs(y) >= 1000 else f"{y:g}"
-            if label not in drawn_y_labels and abs(py - self.height / 2) > 10:  # Avoid overlap near center
-                self.canvas.create_text(px - self.style.TICK_LENGTH - 5, py, text=label,
-                                       font=self.style.AXIS_FONT, fill=self.style.TEXT_SECONDARY, anchor='e')
-                drawn_y_labels.add(label)
+            if plot_top < py < plot_bottom:
+                self.canvas.create_line(
+                    plot_left - self.style.TICK_LENGTH, py, plot_left, py,
+                    fill=self.style.TICK_COLOR, width=1, capstyle=tk.ROUND
+                )
+                if abs(y) >= 1000:
+                    label = f"{y/1000:g}k"
+                elif y == int(y):
+                    label = f"{int(y):,}"
+                else:
+                    label = f"{y:g}"
+                if label not in drawn_y_labels:
+                    self.canvas.create_text(
+                        plot_left - self.style.TICK_LENGTH - 6, py, text=label,
+                        font=self.style.AXIS_FONT, fill=self.style.TEXT_SECONDARY, anchor='e'
+                    )
+                    drawn_y_labels.add(label)
             y += y_interval
 
     def _data_to_pixel_x(self, x: float, x_min: float, x_max: float) -> float:
@@ -1131,29 +1385,27 @@ class Chart(tk.Frame):
         try:
             from tkinter import ttk
             
-            # Create tooltip window
             tooltip = tk.Toplevel()
             tooltip.withdraw()
             tooltip.overrideredirect(True)
             
-            # Try to set topmost attribute
             try:
                 tooltip.attributes('-topmost', True)
             except tk.TclError:
-                pass  # Some platforms may not support this
+                pass
             
-            # Configure styles
             style = ttk.Style()
+            bg = self.style.TOOLTIP_BG
+            fg = self.style.TOOLTIP_TEXT
             style.configure('Tooltip.TFrame',
-                           background=self.style.TEXT,
+                           background=bg,
                            relief='solid',
                            borderwidth=0)
             style.configure('Tooltip.TLabel',
-                           background=self.style.TEXT,
-                           foreground=self.style.BACKGROUND,
+                           background=bg,
+                           foreground=fg,
                            font=self.style.TOOLTIP_FONT)
             
-            # Create frame and label
             tooltip_frame = ttk.Frame(tooltip, style='Tooltip.TFrame')
             tooltip_frame.pack(fill='both', expand=True)
             
@@ -1162,7 +1414,7 @@ class Chart(tk.Frame):
                 style='Tooltip.TLabel',
                 font=self.style.TOOLTIP_FONT
             )
-            label.pack(padx=8, pady=4)
+            label.pack(padx=10, pady=6)
             
             # Register with resource manager for cleanup (Requirements: 3.1, 7.6)
             self.resource_manager.register_tooltip(tooltip)
