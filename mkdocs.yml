@@ -1,0 +1,82 @@
+site_name: ChartForgeTK
+site_description: A modern, interactive charting library for Python desktop apps built purely on Tkinter
+site_url: https://ghassenTn.github.io/ChartForgeTK
+repo_url: https://github.com/ghassenTn/ChartForgeTK
+repo_name: ghassenTn/ChartForgeTK
+
+theme:
+  name: material
+  palette:
+    - scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+    - scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.path
+    - navigation.top
+    - search.highlight
+    - search.suggest
+    - content.code.copy
+    - content.code.annotate
+
+plugins:
+  - search
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - toc:
+      permalink: true
+
+nav:
+  - Home: index.md
+  - Getting Started:
+    - Installation: installation.md
+    - Quick Start: quickstart.md
+  - Chart Types:
+    - Bar Chart: chart-types/bar.md
+    - Line Chart: chart-types/line.md
+    - Pie Chart: chart-types/pie.md
+    - Scatter Plot: chart-types/scatter.md
+    - Bubble Chart: chart-types/bubble.md
+    - Box Plot: chart-types/boxplot.md
+    - Histogram: chart-types/histogram.md
+    - Candlestick Chart: chart-types/candlestick.md
+    - Tableau Chart: chart-types/tableau.md
+    - Gantt Chart: chart-types/gantt.md
+    - Network Graph: chart-types/network.md
+    - Heat Map: chart-types/heatmap.md
+  - Guides:
+    - Pandas Integration: pandas.md
+    - Customization: customization.md
+    - Contributing: contributing.md
+  - API Reference: api-reference.md
+  - Changelog: changelog.md
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/ghassenTn/ChartForgeTK
+    - icon: fontawesome/brands/python
+      link: https://pypi.org/project/chartforgetk/
+
+copyright: Copyright &copy; 2024-2025 Ghassen Saidi
